@@ -1,0 +1,9 @@
+{
+  "test_contract.pdf": {
+    "filename": "test_contract.pdf",
+    "algorithm": "sha256",
+    "digest": "8bb5987c1a7c3d09eb26fac981792ea9be8352d347e6fad8ed7f98d6df5d9c88",
+    "size_bytes": 64,
+    "timestamp": "2026-09-21T00:04:38"
+  }
+}
