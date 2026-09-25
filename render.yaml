@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sdvs-security
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableXsrfProtection=true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: SDVS_ENV
+        value: production
