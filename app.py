@@ -1,13 +1,16 @@
 """Secure Document Verification System (SDVS) - Streamlit Application.
 
-A production-grade, local cryptographic document security suite providing:
-1. Dashboard with security metrics and system status.
-2. Document Encryption & Decryption (AES-256-GCM + Scrypt KDF).
-3. Hash Generator (SHA-256, SHA-1) with checksum downloads.
-4. Document Verification (Two-Document comparison, Manifest checking, 1-bit Tamper Lab).
-5. Verification History (Manifest management, search, and export).
-6. Security Logs (Real-time audit trails, filters, and CSV export).
-7. Settings (Cryptographic parameters, storage inspector, and diagnostics).
+A production-grade, local cryptographic document security suite supporting:
+PDF, DOCX, DOC, TXT, JPG, PNG, XLSX, ZIP, and generic binaries.
+
+Modules:
+1. Dashboard: Security metrics, health indicators, quick operations.
+2. Document Encryption: AES-256-GCM + Scrypt KDF authenticated encryption/decryption.
+3. Hash Generator: SHA-256 & SHA-1 fingerprinting with checksum downloads.
+4. Document Verification: Two-Document comparison, Manifest checking, 1-bit Tamper Lab.
+5. Verification History: Manifest record repository, live search, JSON/CSV exports.
+6. Security Logs: Real-time immutable audit trail with filters and CSV export.
+7. Settings: Cryptographic parameters, storage inspector, and system diagnostics.
 """
 
 import io
@@ -55,6 +58,23 @@ from verifier import (
 from logger import log_activity, read_activity_logs, clear_activity_logs
 
 # -----------------------------------------------------------------------------
+# Supported Document Formats
+# -----------------------------------------------------------------------------
+SUPPORTED_EXTENSIONS = ["pdf", "docx", "doc", "txt", "jpg", "jpeg", "png", "xlsx", "xls", "zip"]
+FORMAT_BADGES_HTML = """
+<div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.6rem 0 1rem 0;">
+    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📄 PDF</span>
+    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📝 DOCX / DOC</span>
+    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📋 TXT</span>
+    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">🖼️ JPG / JPEG</span>
+    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">🎨 PNG</span>
+    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📊 XLSX / XLS</span>
+    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📦 ZIP</span>
+    <span style="background:#F1F5F9; color:#64748B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem;">+ Any Binary</span>
+</div>
+"""
+
+# -----------------------------------------------------------------------------
 # Streamlit Page Configuration
 # -----------------------------------------------------------------------------
 st.set_page_config(
@@ -65,7 +85,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Custom CSS for Premium Cybersecurity Aesthetics
+# Custom CSS for Cybersecurity Aesthetics
 # -----------------------------------------------------------------------------
 st.markdown(
     """
@@ -80,7 +100,6 @@ st.markdown(
         font-family: 'JetBrains Mono', monospace !important;
     }
     
-    /* Header styling */
     .app-header {
         background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
         border: 1px solid #334155;
@@ -88,7 +107,7 @@ st.markdown(
         padding: 1.5rem 1.8rem;
         margin-bottom: 1.5rem;
         color: #F8FAFC;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     .app-header h1 {
         font-size: 1.8rem;
@@ -105,7 +124,6 @@ st.markdown(
         margin: 0;
     }
     
-    /* Metric Cards */
     .sdvs-stat-card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -133,7 +151,6 @@ st.markdown(
         color: #64748B;
     }
     
-    /* Status result boxes */
     .verified-box {
         background-color: #F0FDF4;
         border: 2px solid #22C55E;
@@ -153,21 +170,6 @@ st.markdown(
         margin-bottom: 1rem;
     }
     
-    /* Code/Digest container */
-    .digest-box {
-        background-color: #0F172A;
-        border: 1px solid #334155;
-        color: #38BDF8;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.92rem;
-        padding: 0.85rem 1rem;
-        border-radius: 8px;
-        word-break: break-all;
-        margin-top: 0.4rem;
-        margin-bottom: 0.8rem;
-    }
-    
-    /* Card Container */
     .info-panel {
         background: #F8FAFC;
         border-left: 4px solid #0284C7;
@@ -284,7 +286,11 @@ with st.sidebar:
     st.session_state["nav_section"] = nav_map[selected_nav]
     
     st.markdown("---")
-    st.markdown("#### 🔒 **Security Engine**")
+    st.markdown("#### 🔒 **Supported Formats**")
+    st.caption("PDF, DOCX, DOC, TXT, JPG, PNG, XLSX, ZIP")
+    
+    st.markdown("---")
+    st.markdown("#### ⚙️ **Security Engine**")
     st.caption("• **Cipher:** AES-256-GCM (Authenticated)")
     st.caption("• **KDF:** Scrypt (N=32768, r=8, p=1)")
     st.caption("• **Hashing:** SHA-256 (NIST standard)")
@@ -292,8 +298,8 @@ with st.sidebar:
     
     st.markdown("---")
     stats = get_stats()
-    st.caption(f"📁 Manifest: **{stats['manifest_count']}** registered files")
-    st.caption(f"📝 Audit Logs: **{stats['total_logs']}** recorded events")
+    st.caption(f"📁 Manifest: **{stats['manifest_count']}** files")
+    st.caption(f"📝 Audit Logs: **{stats['total_logs']}** records")
 
 
 # -----------------------------------------------------------------------------
@@ -309,6 +315,10 @@ if st.session_state["nav_section"] == "Dashboard":
         """,
         unsafe_allow_html=True,
     )
+    
+    # Supported Formats Banner
+    st.markdown("**Supported Document Types:**")
+    st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
     
     # Stats row
     stats = get_stats()
@@ -361,37 +371,38 @@ if st.session_state["nav_section"] == "Dashboard":
     q1, q2, q3 = st.columns(3)
     with q1:
         st.markdown("#### 🔒 Confidentiality")
-        st.write("Encrypt any document using military-grade AES-256-GCM with memory-hard Scrypt key derivation.")
+        st.write("Encrypt documents (PDF, DOCX, XLSX, TXT, images, ZIP) with AES-256-GCM authenticated encryption.")
         if st.button("Open Document Encryption ➔", use_container_width=True):
             st.session_state["nav_section"] = "Document Encryption"
             st.rerun()
             
     with q2:
         st.markdown("#### ⚡ Fingerprinting")
-        st.write("Generate cryptographic SHA-256 digests and download standardized checksum certificates.")
+        st.write("Compute collision-resistant SHA-256 cryptographic digests and export checksum files.")
         if st.button("Open Hash Generator ➔", use_container_width=True):
             st.session_state["nav_section"] = "Hash Generator"
             st.rerun()
             
     with q3:
-        st.markdown("#### 🔍 Integrity Check")
-        st.write("Perform constant-time comparison between original and received files to detect 1-bit tampering.")
+        st.markdown("#### 🔍 Integrity Verification")
+        st.write("Perform dual-document comparison or manifest checking with constant-time verification.")
         if st.button("Open Document Verification ➔", use_container_width=True):
             st.session_state["nav_section"] = "Document Verification"
             st.rerun()
             
     st.markdown("---")
     
-    # Architecture & Security Highlights
+    # Architecture & Recent events
     col_arch, col_recent = st.columns([1, 1])
     with col_arch:
-        st.subheader("🛡️ Security Guarantees")
+        st.subheader("🛡️ Security Architecture")
         st.markdown(
             """
-            * **Zero Data Leakage:** All cryptographic transformations run purely on local hardware. No file or secret ever touches external networks.
-            * **Authenticated Encryption (AEAD):** AES-GCM provides both confidentiality and cryptographic authenticity using 16-byte Poly1305/GHASH tags.
-            * **Side-Channel Timing Protection:** All verification routines employ `hmac.compare_digest` to prevent timing analysis attacks.
-            * **Brute-Force Resistance:** Scrypt KDF parameters (N=32768, r=8, p=1) require substantial GPU memory, thwarting ASIC/GPU dictionary attacks.
+            * **Universal File Support:** Stream processing in 64 KB chunks handles arbitrary sizes and formats (PDF, DOCX, XLSX, TXT, JPG, PNG, ZIP, etc.).
+            * **Zero Data Leakage:** All cryptographic transformations run purely on local hardware. No file or secret leaves your device.
+            * **Authenticated Encryption (AEAD):** AES-GCM ensures both confidentiality and integrity with 16-byte Poly1305/GHASH authentication tags.
+            * **Side-Channel Timing Protection:** Uses `hmac.compare_digest` to prevent timing attacks during hash comparisons.
+            * **Brute-Force Hardening:** Scrypt KDF parameters (N=32768, r=8, p=1) thwart GPU/ASIC password cracking attempts.
             """
         )
     
@@ -399,7 +410,7 @@ if st.session_state["nav_section"] == "Dashboard":
         st.subheader("📋 Recent Security Events")
         recent_logs = read_activity_logs(limit=5)
         if not recent_logs:
-            st.info("No activity records logged yet. Run an encryption, hash, or verification to generate logs.")
+            st.info("No activity records logged yet.")
         else:
             for log in recent_logs:
                 op_icon = {
@@ -446,11 +457,13 @@ elif st.session_state["nav_section"] == "Document Encryption":
             unsafe_allow_html=True,
         )
         
+        st.markdown("**Supported Document Formats:**")
+        st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
+        
         uploaded_file = st.file_uploader(
-            "Upload Document to Encrypt:",
-            type=None,
+            "Upload Document to Encrypt (PDF, DOCX, DOC, TXT, JPG, PNG, XLSX, ZIP, etc.):",
+            type=SUPPORTED_EXTENSIONS,
             key="enc_file_uploader",
-            help="Supports any document format (.pdf, .docx, .png, .csv, .zip, etc.)",
         )
         
         col_p1, col_p2 = st.columns(2)
@@ -466,7 +479,7 @@ elif st.session_state["nav_section"] == "Document Encryption":
         with col_p2:
             enc_confirm = st.text_input("Confirm Encryption Password:", type="password", key="enc_confirm_input")
             
-        st.warning("⚠️ **Crucial Notice:** SDVS uses zero-knowledge local cryptography. If you lose this password, the file cannot be decrypted by anyone.")
+        st.warning("⚠️ **Crucial Notice:** SDVS uses zero-knowledge local cryptography. If you lose this password, the file cannot be decrypted.")
         
         if st.button("🔒 Encrypt Document (AES-256-GCM)", type="primary", use_container_width=True):
             if not uploaded_file:
@@ -587,8 +600,12 @@ elif st.session_state["nav_section"] == "Hash Generator":
         unsafe_allow_html=True,
     )
     
+    st.markdown("**Supported Document Formats:**")
+    st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
+    
     hash_upload = st.file_uploader(
-        "Upload Document to Fingerprint:",
+        "Upload Document to Fingerprint (PDF, DOCX, DOC, TXT, JPG, PNG, XLSX, ZIP, etc.):",
+        type=SUPPORTED_EXTENSIONS,
         key="gen_hash_uploader",
     )
     
@@ -685,6 +702,9 @@ elif st.session_state["nav_section"] == "Document Verification":
         unsafe_allow_html=True,
     )
     
+    st.markdown("**Supported Document Formats:**")
+    st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
+    
     v_tab_two, v_tab_manifest, v_tab_tamper = st.tabs([
         "⚖️ Direct Two-Document Comparison",
         "📑 Manifest / Hash Verification",
@@ -696,9 +716,17 @@ elif st.session_state["nav_section"] == "Document Verification":
         st.markdown("Compare the original master file against a received file to verify integrity.")
         col_orig, col_test = st.columns(2)
         with col_orig:
-            file_orig = st.file_uploader("1. Upload Original / Baseline Document:", key="v_file_orig")
+            file_orig = st.file_uploader(
+                "1. Upload Original / Baseline Document:",
+                type=SUPPORTED_EXTENSIONS,
+                key="v_file_orig",
+            )
         with col_test:
-            file_test = st.file_uploader("2. Upload Received / Inspected Document:", key="v_file_test")
+            file_test = st.file_uploader(
+                "2. Upload Received / Inspected Document:",
+                type=SUPPORTED_EXTENSIONS,
+                key="v_file_test",
+            )
             
         v_algo = st.selectbox("Verification Algorithm:", ["SHA-256", "SHA-1"], key="two_doc_algo")
         v_algo_key = "sha256" if v_algo == "SHA-256" else "sha1"
@@ -755,7 +783,11 @@ elif st.session_state["nav_section"] == "Document Verification":
                         
     # 2. MANIFEST & HASH VERIFICATION
     with v_tab_manifest:
-        verify_upload = st.file_uploader("Upload File to Inspect:", key="manifest_v_upload")
+        verify_upload = st.file_uploader(
+            "Upload File to Inspect:",
+            type=SUPPORTED_EXTENSIONS,
+            key="manifest_v_upload",
+        )
         
         mode_choice = st.radio(
             "Verification Source:",
@@ -844,7 +876,11 @@ elif st.session_state["nav_section"] == "Document Verification":
             unsafe_allow_html=True,
         )
         
-        tamper_file = st.file_uploader("Upload Sample Document for 1-Bit Tamper Test:", key="tamper_demo_uploader")
+        tamper_file = st.file_uploader(
+            "Upload Sample Document for 1-Bit Tamper Test:",
+            type=SUPPORTED_EXTENSIONS,
+            key="tamper_demo_uploader",
+        )
         if st.button("🧪 Execute 1-Bit Tamper Test", type="primary"):
             if not tamper_file:
                 st.error("Please select a file first.")
@@ -1029,6 +1065,13 @@ elif st.session_state["nav_section"] == "Settings":
         unsafe_allow_html=True,
     )
     
+    # Supported Types Card
+    st.subheader("📄 Supported Document Formats")
+    st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # 1. Cryptographic Parameters
     st.subheader("🔒 Cryptographic Engine Specifications")
     s1, s2 = st.columns(2)
     with s1:
@@ -1054,6 +1097,7 @@ elif st.session_state["nav_section"] == "Settings":
         
     st.markdown("---")
     
+    # 2. Preferences
     st.subheader("⚙️ System Preferences")
     pref_col1, pref_col2 = st.columns(2)
     with pref_col1:
@@ -1068,6 +1112,7 @@ elif st.session_state["nav_section"] == "Settings":
         
     st.markdown("---")
     
+    # 3. Environment Diagnostics
     st.subheader("💻 Environment Diagnostics")
     d1, d2 = st.columns(2)
     with d1:
