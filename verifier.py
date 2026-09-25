@@ -92,6 +92,26 @@ def get_manifest_entry(
     return manifest.get(clean_filename)
 
 
+def delete_manifest_entry(
+    filename: str,
+    manifest_path: Optional[Union[str, Path]] = None,
+) -> bool:
+    """Deletes an entry from the manifest if it exists."""
+    clean_filename = Path(filename).name
+    manifest = load_manifest(manifest_path)
+    if clean_filename in manifest:
+        del manifest[clean_filename]
+        save_manifest(manifest, manifest_path)
+        return True
+    return False
+
+
+def clear_manifest(manifest_path: Optional[Union[str, Path]] = None) -> None:
+    """Clears all records from the manifest."""
+    save_manifest({}, manifest_path)
+
+
+
 def compare_hashes(actual_hash: str, expected_hash: str) -> Tuple[bool, str, str]:
     """Compares actual and expected hashes using constant-time comparison.
 

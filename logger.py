@@ -81,3 +81,11 @@ def read_activity_logs(
     if limit is not None and limit > 0:
         return entries[:limit]
     return entries
+
+
+def clear_activity_logs(log_path: Optional[Path] = None) -> None:
+    """Clears all logged activity records."""
+    path = get_log_path(log_path)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("")
+
