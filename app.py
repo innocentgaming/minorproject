@@ -586,6 +586,18 @@ elif st.session_state["nav_section"] == "Document Encryption":
                             st.error("Couldn't open the file.")
 
 
+def format_size(size_bytes: int) -> str:
+    """Formats bytes into human-readable B, KB, MB, GB."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.2f} KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.2f} MB"
+    else:
+        return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+
+
 # -----------------------------------------------------------------------------
 # MODULE 3: HASH GENERATOR
 # -----------------------------------------------------------------------------
@@ -609,22 +621,7 @@ elif st.session_state["nav_section"] == "Hash Generator":
         key="gen_hash_uploader",
     )
     
-    col_alg, col_info = st.columns([1, 1])
-    with col_alg:
-        algo_choice = st.selectbox(
-            "Select Hash Algorithm:",
-            ["SHA-256 (NIST standard, recommended)", "SHA-1 (Legacy / Weak)"],
-            index=0 if st.session_state["default_algo"] == "SHA-256" else 1,
-        )
-        selected_algo = "sha256" if "SHA-256" in algo_choice else "sha1"
-        
-    with col_info:
-        if selected_algo == "sha1":
-            st.warning("⚠️ **Cryptographic Warning:** SHA-1 is vulnerable to collision attacks (SHAttered). Recommended only for legacy hash validation.")
-        else:
-            st.info("ℹ️ **SHA-256:** 256-bit digest providing 128 bits of security against collision attacks.")
-            
-    if st.button("⚡ Generate Cryptographic Hash", type="primary", use_container_width=True):
+    if st.button("⚡ Generate Cryptographic Fingerprints (SHA-256 & SHA-1)", type="primary", use_container_width=True):
         if not hash_upload:
             st.error("Please upload a file to hash.")
         else:
@@ -634,14 +631,19 @@ elif st.session_state["nav_section"] == "Hash Generator":
                 temp_file.write_bytes(file_bytes)
                 
                 try:
-                    digest = hash_file(temp_file, algo=selected_algo)
+                    digest_sha256 = hash_file(temp_file, algo="sha256")
+                    digest_sha1 = hash_file(temp_file, algo="sha1")
+                    size_bytes = len(file_bytes)
+                    size_human = format_size(size_bytes)
+                    
                     st.session_state["latest_hash"] = {
                         "filename": hash_upload.name,
-                        "algorithm": selected_algo,
-                        "digest": digest,
-                        "size_bytes": len(file_bytes),
+                        "size_bytes": size_bytes,
+                        "size_human": size_human,
+                        "sha256": digest_sha256,
+                        "sha1": digest_sha1,
                     }
-                    log_activity("hash", hash_upload.name, selected_algo)
+                    log_activity("hash", hash_upload.name, "sha256+sha1")
                 except HashEngineError as e:
                     st.error(str(e))
                 except Exception:
@@ -653,39 +655,63 @@ elif st.session_state["nav_section"] == "Hash Generator":
         st.markdown("---")
         st.subheader("📋 Document Cryptographic Fingerprint")
         
-        m1, m2, m3 = st.columns(3)
+        m1, m2 = st.columns(2)
         with m1:
-            st.metric("Filename", res["filename"])
+            st.metric("Document", res["filename"])
         with m2:
-            st.metric("File Size", f"{res['size_bytes']:,} bytes")
-        with m3:
-            st.metric("Algorithm", res["algorithm"].upper())
+            st.metric("File Size", f"{res.get('size_human', format_size(res['size_bytes']))} ({res['size_bytes']:,} bytes)")
             
-        st.markdown("**Hexadecimal Digest:**")
-        st.code(res["digest"], language="text")
+        # SHA-256 Section
+        st.markdown("#### 🔒 **SHA-256 (NIST Secure Standard)**")
+        st.code(res["sha256"], language="text")
         
-        # Download and Manifest options
-        d_col1, d_col2 = st.columns(2)
-        with d_col1:
-            checksum_text = f"{res['digest']}  {res['filename']}\n"
-            checksum_filename = f"{res['filename']}.{res['algorithm']}"
+        c_sha256_1, c_sha256_2 = st.columns(2)
+        with c_sha256_1:
+            chk256_text = f"{res['sha256']}  {res['filename']}\n"
             st.download_button(
-                label=f"⬇️ Download Checksum File ({checksum_filename})",
-                data=checksum_text,
-                file_name=checksum_filename,
+                label=f"⬇️ Download {res['filename']}.sha256",
+                data=chk256_text,
+                file_name=f"{res['filename']}.sha256",
                 mime="text/plain",
                 use_container_width=True,
             )
-        with d_col2:
-            if st.button("💾 Save to Verification Manifest", use_container_width=True):
+        with c_sha256_2:
+            if st.button("💾 Save SHA-256 to Manifest", use_container_width=True):
                 register_manifest_entry(
                     filename=res["filename"],
-                    algorithm=res["algorithm"],
-                    digest=res["digest"],
+                    algorithm="sha256",
+                    digest=res["sha256"],
                     size_bytes=res["size_bytes"],
                 )
-                log_activity("manifest_save", res["filename"], f"saved {res['algorithm']}")
-                st.success(f"✅ Registered **{res['filename']}** to local manifest!")
+                log_activity("manifest_save", res["filename"], "saved sha256")
+                st.success(f"✅ Registered **{res['filename']}** (SHA-256) to manifest!")
+                
+        # SHA-1 Section
+        st.markdown("#### ⚠️ **SHA-1 (Legacy / Weak)**")
+        st.caption("Warning: SHA-1 is vulnerable to theoretical and practical collision attacks.")
+        st.code(res["sha1"], language="text")
+        
+        c_sha1_1, c_sha1_2 = st.columns(2)
+        with c_sha1_1:
+            chk1_text = f"{res['sha1']}  {res['filename']}\n"
+            st.download_button(
+                label=f"⬇️ Download {res['filename']}.sha1",
+                data=chk1_text,
+                file_name=f"{res['filename']}.sha1",
+                mime="text/plain",
+                use_container_width=True,
+            )
+        with c_sha1_2:
+            if st.button("💾 Save SHA-1 to Manifest", use_container_width=True):
+                register_manifest_entry(
+                    filename=res["filename"],
+                    algorithm="sha1",
+                    digest=res["sha1"],
+                    size_bytes=res["size_bytes"],
+                )
+                log_activity("manifest_save", res["filename"], "saved sha1")
+                st.success(f"✅ Registered **{res['filename']}** (SHA-1) to manifest!")
+
 
 
 # -----------------------------------------------------------------------------
