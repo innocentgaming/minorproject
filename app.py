@@ -1,18 +1,19 @@
 """Secure Document Verification System (SDVS) - Next-Gen Enterprise Security Suite.
 
-A production-grade, local cryptographic document security platform:
-1. Enterprise Security Operations Center (SOC) Dashboard.
-2. High-speed Drag & Drop Document Analysis with instant multi-format fingerprinting.
-3. Dual-Algorithm Hash Engine (SHA-256 primary + SHA-1 legacy) with checksum exports.
-4. Authenticated AES-256-GCM Encryption with Scrypt KDF & entropy strength meter.
-5. Authenticated Decryption with AAD validation & zero-plaintext-leakage defense.
-6. Constant-Time Document Integrity Verification (Two-Document & Manifest modes).
-7. Tamper Simulation Lab demonstrating the Avalanche Effect.
-8. Persistent Verification History & Manifest Repository.
-9. Real-Time Immutable Security Audit Trail.
-10. Live Security Demonstration Lab (3 Guided Viva Demos).
-11. Educational Security Center & Threat Defense Specifications.
-12. Configurable Diagnostics & Storage Management.
+Features:
+1. Dynamic Dark Cyber & Light Corporate Theme Engine.
+2. Enterprise Security Operations Center (SOC) Dashboard.
+3. High-speed Drag & Drop Document Analysis with instant multi-format fingerprinting.
+4. Dual-Algorithm Hash Engine (SHA-256 primary + SHA-1 legacy) with checksum exports.
+5. Authenticated AES-256-GCM Encryption with Scrypt KDF & entropy strength meter.
+6. Authenticated Decryption with AAD validation & zero-plaintext-leakage defense.
+7. Constant-Time Document Integrity Verification (Two-Document & Manifest modes).
+8. Tamper Simulation Lab demonstrating the Avalanche Effect.
+9. Persistent Verification History & Manifest Repository.
+10. Real-Time Immutable Security Audit Trail.
+11. Live Security Demonstration Lab (3 Guided Viva Demos).
+12. Educational Security Center & Threat Defense Specifications.
+13. Configurable Diagnostics & Storage Management.
 """
 
 import io
@@ -78,18 +79,37 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Ultra-Premium Cybersecurity Design System (CSS)
+# Session State Setup
 # -----------------------------------------------------------------------------
-st.markdown(
-    """
+if "theme_mode" not in st.session_state:
+    st.session_state["theme_mode"] = "🌙 Dark Cyber"
+
+if "nav_section" not in st.session_state:
+    st.session_state["nav_section"] = "Dashboard"
+
+if "max_file_size_mb" not in st.session_state:
+    st.session_state["max_file_size_mb"] = DEFAULT_MAX_FILE_SIZE_MB
+
+if "latest_hash_data" not in st.session_state:
+    st.session_state["latest_hash_data"] = None
+
+# -----------------------------------------------------------------------------
+# Dynamic Theme Engine (Light & Dark Mode)
+# -----------------------------------------------------------------------------
+is_dark = "Dark" in st.session_state["theme_mode"]
+
+if is_dark:
+    theme_css = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
     
     html, body, [class*="css"], .stApp {
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #0B0F19 !important;
+        color: #F8FAFC !important;
     }
     
-    .code, code, pre, .hash-code, .stCode {
+    .stCode, code, pre, .hash-code {
         font-family: 'JetBrains Mono', monospace !important;
     }
     
@@ -102,12 +122,12 @@ st.markdown(
     /* Hero Banner */
     .soc-hero {
         background: linear-gradient(135deg, #090D16 0%, #0F172A 50%, #1E293B 100%);
-        border: 1px solid rgba(56, 189, 248, 0.25);
+        border: 1px solid rgba(56, 189, 248, 0.35);
         border-radius: 14px;
         padding: 1.8rem 2.2rem;
         margin-bottom: 1.5rem;
         color: #F8FAFC;
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
     }
     .soc-hero-title {
         font-size: 1.9rem;
@@ -127,12 +147,8 @@ st.markdown(
         max-width: 850px;
     }
     
-    /* Pill Badges */
-    .chip-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.45rem;
-    }
+    /* Chips */
+    .chip-container { display: flex; flex-wrap: wrap; gap: 0.45rem; }
     .cyber-chip {
         background: rgba(15, 23, 42, 0.9);
         border: 1px solid rgba(56, 189, 248, 0.35);
@@ -141,7 +157,6 @@ st.markdown(
         border-radius: 9999px;
         font-size: 0.78rem;
         font-weight: 700;
-        letter-spacing: 0.02em;
     }
     .cyber-chip-green {
         background: rgba(6, 78, 59, 0.8);
@@ -153,13 +168,186 @@ st.markdown(
         font-weight: 700;
     }
     
-    /* KPI Stat Cards */
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1rem;
+    /* KPI Stat Cards (Dark Mode) */
+    .kpi-box {
+        background: #111827;
+        border: 1px solid #1F2937;
+        border-radius: 12px;
+        padding: 1.3rem 1.1rem;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .kpi-box:hover {
+        transform: translateY(-2px);
+        border-color: #38BDF8;
+    }
+    .kpi-box.c-blue { border-top: 4px solid #38BDF8; }
+    .kpi-box.c-green { border-top: 4px solid #10B981; }
+    .kpi-box.c-purple { border-top: 4px solid #A855F7; }
+    .kpi-box.c-red { border-top: 4px solid #EF4444; }
+    
+    .kpi-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #F8FAFC;
+        line-height: 1;
+        margin-bottom: 0.3rem;
+    }
+    .kpi-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94A3B8;
+        margin-bottom: 0.2rem;
+    }
+    .kpi-sub {
+        font-size: 0.74rem;
+        color: #64748B;
+        font-weight: 600;
+    }
+    
+    /* Pipeline Stepper (Dark Mode) */
+    .flow-pipeline-card {
+        background: #111827;
+        border: 1px solid #1F2937;
+        border-radius: 12px;
+        padding: 1.2rem 1.5rem;
         margin-bottom: 1.5rem;
     }
+    .flow-step-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .flow-step {
+        background: #1E293B;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 0.5rem 0.9rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #E2E8F0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    
+    /* Verdict Banners */
+    .verdict-banner-verified {
+        background: linear-gradient(135deg, #064E3B 0%, #065F46 100%);
+        border: 2px solid #10B981;
+        border-radius: 10px;
+        padding: 1.3rem 1.6rem;
+        color: #ECFDF5;
+        margin: 1.2rem 0;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+    .verdict-banner-tampered {
+        background: linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%);
+        border: 2px solid #EF4444;
+        border-radius: 10px;
+        padding: 1.3rem 1.6rem;
+        color: #FEF2F2;
+        margin: 1.2rem 0;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+    
+    /* Callout & Format Badges (Dark Mode) */
+    .callout-box {
+        background: #111827;
+        border: 1px solid #1F2937;
+        border-left: 4px solid #38BDF8;
+        border-radius: 8px;
+        padding: 0.9rem 1.2rem;
+        margin-bottom: 1.2rem;
+        color: #CBD5E1;
+        font-size: 0.92rem;
+    }
+    .format-strip { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0 1rem 0; }
+    .fmt-badge {
+        background: #1E293B;
+        border: 1px solid #334155;
+        color: #38BDF8;
+        padding: 0.22rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    </style>
+    """
+else:
+    theme_css = """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    
+    html, body, [class*="css"], .stApp {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #F8FAFC !important;
+        color: #0F172A !important;
+    }
+    
+    .stCode, code, pre, .hash-code {
+        font-family: 'JetBrains Mono', monospace !important;
+    }
+    
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1280px;
+    }
+    
+    /* Hero Banner (Light Mode) */
+    .soc-hero {
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.8rem 2.2rem;
+        margin-bottom: 1.5rem;
+        color: #F8FAFC;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+    .soc-hero-title {
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin: 0 0 0.3rem 0;
+        color: #FFFFFF;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .soc-hero-subtitle {
+        font-size: 0.95rem;
+        color: #94A3B8;
+        margin: 0 0 1.2rem 0;
+        max-width: 850px;
+    }
+    
+    /* Chips */
+    .chip-container { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .cyber-chip {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        color: #38BDF8;
+        padding: 0.28rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    .cyber-chip-green {
+        background: rgba(6, 78, 59, 0.8);
+        border: 1px solid #10B981;
+        color: #6EE7B7;
+        padding: 0.28rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    
+    /* KPI Stat Cards (Light Mode) */
     .kpi-box {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -199,10 +387,10 @@ st.markdown(
         font-weight: 600;
     }
     
-    /* Interactive Flow Pipeline Card */
+    /* Pipeline Stepper (Light Mode) */
     .flow-pipeline-card {
-        background: #F8FAFC;
-        border: 1px solid #CBD5E1;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
         border-radius: 12px;
         padding: 1.2rem 1.5rem;
         margin-bottom: 1.5rem;
@@ -215,7 +403,7 @@ st.markdown(
         gap: 0.5rem;
     }
     .flow-step {
-        background: #FFFFFF;
+        background: #F8FAFC;
         border: 1px solid #CBD5E1;
         border-radius: 8px;
         padding: 0.5rem 0.9rem;
@@ -225,7 +413,6 @@ st.markdown(
         display: flex;
         align-items: center;
         gap: 0.4rem;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
     
     /* Verdict Banners */
@@ -248,9 +435,9 @@ st.markdown(
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
     }
     
-    /* Callout & Format Chips */
+    /* Callout & Format Badges (Light Mode) */
     .callout-box {
-        background: #F8FAFC;
+        background: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-left: 4px solid #0284C7;
         border-radius: 8px;
@@ -259,12 +446,7 @@ st.markdown(
         color: #334155;
         font-size: 0.92rem;
     }
-    .format-strip {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        margin: 0.5rem 0 1rem 0;
-    }
+    .format-strip { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0 1rem 0; }
     .fmt-badge {
         background: #F1F5F9;
         border: 1px solid #CBD5E1;
@@ -275,21 +457,9 @@ st.markdown(
         font-weight: 700;
     }
     </style>
-    """,
-    unsafe_allow_html=True,
-)
+    """
 
-# -----------------------------------------------------------------------------
-# Session State Setup
-# -----------------------------------------------------------------------------
-if "nav_section" not in st.session_state:
-    st.session_state["nav_section"] = "Dashboard"
-
-if "max_file_size_mb" not in st.session_state:
-    st.session_state["max_file_size_mb"] = DEFAULT_MAX_FILE_SIZE_MB
-
-if "latest_hash_data" not in st.session_state:
-    st.session_state["latest_hash_data"] = None
+st.markdown(theme_css, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # Utility Functions
@@ -356,12 +526,24 @@ def render_format_badges():
     st.markdown(badges_html, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# Sidebar Navigation & System Telemetry
+# Sidebar Navigation & Theme Switcher
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.markdown("## 🛡️ **SDVS Core**")
-    st.caption("🔒 **Security Engine:** AES-256-GCM + Scrypt + SHA-256")
-    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Theme Toggle
+    selected_theme = st.selectbox(
+        "Theme Preference:",
+        ["🌙 Dark Cyber", "☀️ Light Corporate"],
+        index=0 if "Dark" in st.session_state["theme_mode"] else 1,
+        key="theme_switcher_select",
+    )
+    if selected_theme != st.session_state["theme_mode"]:
+        st.session_state["theme_mode"] = selected_theme
+        st.rerun()
+
+    st.caption("🔒 **Engine:** AES-256-GCM + Scrypt + SHA-256")
+    st.markdown("---")
 
     nav_items = [
         "📊 Dashboard",
@@ -481,7 +663,7 @@ if st.session_state["nav_section"] == "Dashboard":
     st.markdown(
         """
         <div class="flow-pipeline-card">
-            <div style="font-size:0.88rem; font-weight:800; color:#0F172A; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.8rem;">
+            <div style="font-size:0.88rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.8rem;">
                 🔄 Cryptographic Pipeline Architecture
             </div>
             <div class="flow-step-row">
@@ -495,7 +677,7 @@ if st.session_state["nav_section"] == "Dashboard":
                 <div style="color:#94A3B8; font-weight:800;">➔</div>
                 <div class="flow-step"><span>🔍</span> 5. Constant-Time Verify</div>
                 <div style="color:#94A3B8; font-weight:800;">➔</div>
-                <div class="flow-step" style="border-color:#10B981; color:#065F46;"><span>🛡️</span> 6. Tamper Intercept</div>
+                <div class="flow-step" style="border-color:#10B981; color:#10B981;"><span>🛡️</span> 6. Tamper Intercept</div>
             </div>
         </div>
         """,
@@ -1447,6 +1629,18 @@ elif st.session_state["nav_section"] == "Settings & Diagnostics":
         unsafe_allow_html=True,
     )
 
+    st.subheader("🎨 Appearance & Theme")
+    theme_choice = st.selectbox(
+        "Application Theme:",
+        ["🌙 Dark Cyber", "☀️ Light Corporate"],
+        index=0 if "Dark" in st.session_state["theme_mode"] else 1,
+        key="settings_theme_select",
+    )
+    if theme_choice != st.session_state["theme_mode"]:
+        st.session_state["theme_mode"] = theme_choice
+        st.rerun()
+
+    st.markdown("---")
     st.subheader("⚙️ Upload Preferences")
     new_limit = st.slider("Maximum File Size Limit (MB):", min_value=5, max_value=200, value=st.session_state["max_file_size_mb"], step=5)
     st.session_state["max_file_size_mb"] = new_limit
