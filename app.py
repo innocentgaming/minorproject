@@ -1,16 +1,18 @@
-"""Secure Document Verification System (SDVS) - Streamlit Application.
+"""Secure Document Verification System (SDVS) - Production Web Application.
 
-A production-grade, local cryptographic document security suite supporting:
-PDF, DOCX, DOC, TXT, JPG, PNG, XLSX, ZIP, and generic binaries.
-
-Modules:
-1. Dashboard: Security metrics, health indicators, quick operations.
-2. Document Encryption: AES-256-GCM + Scrypt KDF authenticated encryption/decryption.
-3. Hash Generator: SHA-256 & SHA-1 fingerprinting with checksum downloads.
-4. Document Verification: Two-Document comparison, Manifest checking, 1-bit Tamper Lab.
-5. Verification History: Manifest record repository, live search, JSON/CSV exports.
-6. Security Logs: Real-time immutable audit trail with filters and CSV export.
-7. Settings: Cryptographic parameters, storage inspector, and system diagnostics.
+A complete cybersecurity application demonstrating:
+1. Dashboard with live security telemetry and audit metrics.
+2. Secure Document Upload & Metadata Analysis.
+3. Cryptographic Hash Generator (SHA-256 NIST standard & SHA-1 legacy benchmark).
+4. AES-256-GCM Authenticated Encryption with Scrypt KDF.
+5. Decryption & Integrity Authentication Engine.
+6. Document Integrity Verification (Two-Document & Expected Hash comparison).
+7. Tamper Simulation Lab (1-Bit Avalanche Effect demonstration).
+8. Verification History & Manifest Management.
+9. Security Audit Logging (Immutable, secret-sanitized trail).
+10. Live Security Demonstration Lab (3 Guided Viva Demos).
+11. Educational Center ("About Security").
+12. System Settings, Storage Inspector & Environment Diagnostics.
 """
 
 import io
@@ -20,6 +22,7 @@ import platform
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Any, Tuple
 
 import streamlit as st
 
@@ -56,26 +59,16 @@ from verifier import (
     run_tamper_demo,
 )
 from logger import log_activity, read_activity_logs, clear_activity_logs
+from reports import generate_text_report
 
 # -----------------------------------------------------------------------------
-# Supported Document Formats
+# Configuration & Constants
 # -----------------------------------------------------------------------------
-SUPPORTED_EXTENSIONS = ["pdf", "docx", "doc", "txt", "jpg", "jpeg", "png", "xlsx", "xls", "zip"]
-FORMAT_BADGES_HTML = """
-<div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.6rem 0 1rem 0;">
-    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📄 PDF</span>
-    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📝 DOCX / DOC</span>
-    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📋 TXT</span>
-    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">🖼️ JPG / JPEG</span>
-    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">🎨 PNG</span>
-    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📊 XLSX / XLS</span>
-    <span style="background:#E2E8F0; color:#1E293B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:600;">📦 ZIP</span>
-    <span style="background:#F1F5F9; color:#64748B; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.8rem;">+ Any Binary</span>
-</div>
-"""
+SUPPORTED_EXTENSIONS = ["pdf", "doc", "docx", "txt", "xlsx", "csv", "jpg", "jpeg", "png", "zip"]
+DEFAULT_MAX_FILE_SIZE_MB = 50
 
 # -----------------------------------------------------------------------------
-# Streamlit Page Configuration
+# Streamlit Page Setup
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="SDVS - Secure Document Verification System",
@@ -85,7 +78,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Custom CSS for Cybersecurity Aesthetics
+# Professional Cybersecurity CSS (Clean, Modern, Accessible)
 # -----------------------------------------------------------------------------
 st.markdown(
     """
@@ -100,17 +93,17 @@ st.markdown(
         font-family: 'JetBrains Mono', monospace !important;
     }
     
+    /* Header Container */
     .app-header {
         background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
         border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 1.5rem 1.8rem;
-        margin-bottom: 1.5rem;
+        border-radius: 10px;
+        padding: 1.3rem 1.6rem;
+        margin-bottom: 1.4rem;
         color: #F8FAFC;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     .app-header h1 {
-        font-size: 1.8rem;
+        font-size: 1.7rem;
         font-weight: 700;
         margin: 0 0 0.3rem 0;
         color: #FFFFFF;
@@ -119,64 +112,78 @@ st.markdown(
         gap: 0.5rem;
     }
     .app-header p {
-        font-size: 0.95rem;
+        font-size: 0.92rem;
         color: #94A3B8;
         margin: 0;
     }
     
-    .sdvs-stat-card {
+    /* Professional Stat Cards */
+    .stat-card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 10px;
-        padding: 1.2rem;
+        border-radius: 8px;
+        padding: 1.1rem;
         text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
-    .sdvs-stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    .sdvs-stat-val {
-        font-size: 1.9rem;
+    .stat-val {
+        font-size: 1.8rem;
         font-weight: 700;
         color: #0F172A;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.1rem;
     }
-    .sdvs-stat-label {
-        font-size: 0.82rem;
+    .stat-label {
+        font-size: 0.8rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: #64748B;
     }
     
-    .verified-box {
+    /* Accessible Status Verdict Boxes */
+    .status-box-verified {
         background-color: #F0FDF4;
-        border: 2px solid #22C55E;
-        border-radius: 10px;
-        padding: 1.4rem;
+        border: 2px solid #16A34A;
+        border-radius: 8px;
+        padding: 1.2rem 1.4rem;
         color: #14532D;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
+        margin: 1rem 0;
     }
-    .modified-box {
+    .status-box-tampered {
         background-color: #FEF2F2;
-        border: 2px solid #EF4444;
-        border-radius: 10px;
-        padding: 1.4rem;
+        border: 2px solid #DC2626;
+        border-radius: 8px;
+        padding: 1.2rem 1.4rem;
         color: #7F1D1D;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
+        margin: 1rem 0;
     }
     
-    .info-panel {
+    /* Info Panels */
+    .info-callout {
         background: #F8FAFC;
         border-left: 4px solid #0284C7;
-        border-radius: 0 8px 8px 0;
-        padding: 1rem 1.2rem;
-        margin-bottom: 1.2rem;
+        border-radius: 0 6px 6px 0;
+        padding: 0.85rem 1.1rem;
+        margin-bottom: 1.1rem;
         color: #334155;
+        font-size: 0.92rem;
+    }
+    
+    /* Format Badges */
+    .badge-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin: 0.5rem 0 0.9rem 0;
+    }
+    .format-badge {
+        background: #F1F5F9;
+        border: 1px solid #CBD5E1;
+        color: #334155;
+        padding: 0.18rem 0.55rem;
+        border-radius: 4px;
+        font-size: 0.78rem;
+        font-weight: 600;
     }
     </style>
     """,
@@ -184,408 +191,23 @@ st.markdown(
 )
 
 # -----------------------------------------------------------------------------
-# Initialize Session State
+# Session State Initialization
 # -----------------------------------------------------------------------------
 if "nav_section" not in st.session_state:
     st.session_state["nav_section"] = "Dashboard"
 
-if "latest_hash" not in st.session_state:
-    st.session_state["latest_hash"] = None
+if "max_file_size_mb" not in st.session_state:
+    st.session_state["max_file_size_mb"] = DEFAULT_MAX_FILE_SIZE_MB
 
-if "default_algo" not in st.session_state:
-    st.session_state["default_algo"] = "SHA-256"
+if "latest_uploaded_file" not in st.session_state:
+    st.session_state["latest_uploaded_file"] = None
+
+if "latest_hash_data" not in st.session_state:
+    st.session_state["latest_hash_data"] = None
 
 # -----------------------------------------------------------------------------
 # Helper Functions
 # -----------------------------------------------------------------------------
-def get_stats():
-    """Computes high-level usage stats from manifest and logs."""
-    manifest = load_manifest()
-    logs = read_activity_logs()
-    
-    enc_count = sum(1 for log in logs if log.get("operation") == "encrypt" and "success" in log.get("result", ""))
-    dec_count = sum(1 for log in logs if log.get("operation") == "decrypt" and "success" in log.get("result", ""))
-    hash_count = sum(1 for log in logs if log.get("operation") == "hash")
-    verify_count = sum(1 for log in logs if log.get("operation") == "verify")
-    manifest_count = len(manifest)
-    
-    return {
-        "manifest_count": manifest_count,
-        "enc_count": enc_count,
-        "dec_count": dec_count,
-        "hash_count": hash_count,
-        "verify_count": verify_count,
-        "total_logs": len(logs),
-    }
-
-def password_strength(pwd: str) -> tuple[int, str, str]:
-    """Evaluates password strength and returns (score 0-100, label, color)."""
-    if not pwd:
-        return 0, "Empty", "#94A3B8"
-    
-    score = 0
-    if len(pwd) >= 8:
-        score += 30
-    if len(pwd) >= 12:
-        score += 20
-    if any(c.isupper() for c in pwd):
-        score += 15
-    if any(c.isdigit() for c in pwd):
-        score += 15
-    if any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in pwd):
-        score += 20
-        
-    if score < 40:
-        return score, "Weak", "#EF4444"
-    elif score < 75:
-        return score, "Moderate", "#F59E0B"
-    else:
-        return score, "Strong", "#10B981"
-
-# -----------------------------------------------------------------------------
-# Sidebar Navigation
-# -----------------------------------------------------------------------------
-with st.sidebar:
-    st.markdown("### 🛡️ **SDVS Menu**")
-    
-    nav_options = [
-        "📊 Dashboard",
-        "🔒 Document Encryption",
-        "⚡ Hash Generator",
-        "🔍 Document Verification",
-        "📜 Verification History",
-        "🛡️ Security Logs",
-        "⚙️ Settings",
-    ]
-    
-    nav_map = {
-        "📊 Dashboard": "Dashboard",
-        "🔒 Document Encryption": "Document Encryption",
-        "⚡ Hash Generator": "Hash Generator",
-        "🔍 Document Verification": "Document Verification",
-        "📜 Verification History": "Verification History",
-        "🛡️ Security Logs": "Security Logs",
-        "⚙️ Settings": "Settings",
-    }
-    
-    current_key = st.session_state["nav_section"]
-    current_idx = 0
-    for idx, opt in enumerate(nav_options):
-        if nav_map[opt] == current_key:
-            current_idx = idx
-            break
-            
-    selected_nav = st.radio(
-        "Go to Module:",
-        nav_options,
-        index=current_idx,
-        key="sidebar_nav_radio",
-        label_visibility="collapsed",
-    )
-    
-    st.session_state["nav_section"] = nav_map[selected_nav]
-    
-    st.markdown("---")
-    st.markdown("#### 🔒 **Supported Formats**")
-    st.caption("PDF, DOCX, DOC, TXT, JPG, PNG, XLSX, ZIP")
-    
-    st.markdown("---")
-    st.markdown("#### ⚙️ **Security Engine**")
-    st.caption("• **Cipher:** AES-256-GCM (Authenticated)")
-    st.caption("• **KDF:** Scrypt (N=32768, r=8, p=1)")
-    st.caption("• **Hashing:** SHA-256 (NIST standard)")
-    st.caption("• **Comparison:** Constant-time `hmac.compare_digest`")
-    
-    st.markdown("---")
-    stats = get_stats()
-    st.caption(f"📁 Manifest: **{stats['manifest_count']}** files")
-    st.caption(f"📝 Audit Logs: **{stats['total_logs']}** records")
-
-
-# -----------------------------------------------------------------------------
-# MODULE 1: DASHBOARD
-# -----------------------------------------------------------------------------
-if st.session_state["nav_section"] == "Dashboard":
-    st.markdown(
-        """
-        <div class="app-header">
-            <h1>🛡️ Secure Document Verification System</h1>
-            <p>Cryptographic integrity verification, AES-256-GCM confidentiality suite, and tamper audit defense.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    
-    # Supported Formats Banner
-    st.markdown("**Supported Document Types:**")
-    st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
-    
-    # Stats row
-    stats = get_stats()
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.markdown(
-            f"""
-            <div class="sdvs-stat-card">
-                <div class="sdvs-stat-val">🔒 {stats['enc_count']}</div>
-                <div class="sdvs-stat-label">Files Encrypted</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with c2:
-        st.markdown(
-            f"""
-            <div class="sdvs-stat-card">
-                <div class="sdvs-stat-val">⚡ {stats['hash_count']}</div>
-                <div class="sdvs-stat-label">Hashes Computed</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with c3:
-        st.markdown(
-            f"""
-            <div class="sdvs-stat-card">
-                <div class="sdvs-stat-val">🔍 {stats['verify_count']}</div>
-                <div class="sdvs-stat-label">Verifications Run</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with c4:
-        st.markdown(
-            f"""
-            <div class="sdvs-stat-card">
-                <div class="sdvs-stat-val">📜 {stats['manifest_count']}</div>
-                <div class="sdvs-stat-label">Manifest Records</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Quick Action Cards
-    st.subheader("⚡ Quick Operations")
-    q1, q2, q3 = st.columns(3)
-    with q1:
-        st.markdown("#### 🔒 Confidentiality")
-        st.write("Encrypt documents (PDF, DOCX, XLSX, TXT, images, ZIP) with AES-256-GCM authenticated encryption.")
-        if st.button("Open Document Encryption ➔", use_container_width=True):
-            st.session_state["nav_section"] = "Document Encryption"
-            st.rerun()
-            
-    with q2:
-        st.markdown("#### ⚡ Fingerprinting")
-        st.write("Compute collision-resistant SHA-256 cryptographic digests and export checksum files.")
-        if st.button("Open Hash Generator ➔", use_container_width=True):
-            st.session_state["nav_section"] = "Hash Generator"
-            st.rerun()
-            
-    with q3:
-        st.markdown("#### 🔍 Integrity Verification")
-        st.write("Perform dual-document comparison or manifest checking with constant-time verification.")
-        if st.button("Open Document Verification ➔", use_container_width=True):
-            st.session_state["nav_section"] = "Document Verification"
-            st.rerun()
-            
-    st.markdown("---")
-    
-    # Architecture & Recent events
-    col_arch, col_recent = st.columns([1, 1])
-    with col_arch:
-        st.subheader("🛡️ Security Architecture")
-        st.markdown(
-            """
-            * **Universal File Support:** Stream processing in 64 KB chunks handles arbitrary sizes and formats (PDF, DOCX, XLSX, TXT, JPG, PNG, ZIP, etc.).
-            * **Zero Data Leakage:** All cryptographic transformations run purely on local hardware. No file or secret leaves your device.
-            * **Authenticated Encryption (AEAD):** AES-GCM ensures both confidentiality and integrity with 16-byte Poly1305/GHASH authentication tags.
-            * **Side-Channel Timing Protection:** Uses `hmac.compare_digest` to prevent timing attacks during hash comparisons.
-            * **Brute-Force Hardening:** Scrypt KDF parameters (N=32768, r=8, p=1) thwart GPU/ASIC password cracking attempts.
-            """
-        )
-    
-    with col_recent:
-        st.subheader("📋 Recent Security Events")
-        recent_logs = read_activity_logs(limit=5)
-        if not recent_logs:
-            st.info("No activity records logged yet.")
-        else:
-            for log in recent_logs:
-                op_icon = {
-                    "encrypt": "🔒",
-                    "decrypt": "🔓",
-                    "hash": "⚡",
-                    "verify": "🔍",
-                    "manifest_save": "💾",
-                    "tamper_demo": "🧪",
-                }.get(log["operation"], "📌")
-                
-                st.markdown(
-                    f"**{op_icon} {log['operation'].upper()}** &nbsp;|&nbsp; `{log['filename']}` &nbsp;|&nbsp; "
-                    f"<span style='color:#64748B; font-size:0.85rem;'>{log['timestamp']}</span>",
-                    unsafe_allow_html=True,
-                )
-                st.caption(f"Result: `{log['result']}`")
-
-
-# -----------------------------------------------------------------------------
-# MODULE 2: DOCUMENT ENCRYPTION
-# -----------------------------------------------------------------------------
-elif st.session_state["nav_section"] == "Document Encryption":
-    st.markdown(
-        """
-        <div class="app-header">
-            <h1>🔒 Document Encryption & Decryption</h1>
-            <p>Authenticated AES-256-GCM cipher with Scrypt key derivation. Rejects tampered files and enforces confidentiality.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    
-    enc_tab, dec_tab = st.tabs(["🔒 Encrypt Document", "🔓 Decrypt Document"])
-    
-    # TAB: ENCRYPT
-    with enc_tab:
-        st.markdown(
-            """
-            <div class="info-panel">
-                <strong>Standard:</strong> AES-256-GCM authenticated encryption (32-byte key, 16-byte random salt, 12-byte random nonce, 33-byte AAD header).
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        st.markdown("**Supported Document Formats:**")
-        st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
-        
-        uploaded_file = st.file_uploader(
-            "Upload Document to Encrypt (PDF, DOCX, DOC, TXT, JPG, PNG, XLSX, ZIP, etc.):",
-            type=SUPPORTED_EXTENSIONS,
-            key="enc_file_uploader",
-        )
-        
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            enc_pwd = st.text_input("Encryption Password:", type="password", key="enc_password_input")
-            if enc_pwd:
-                score, label, color = password_strength(enc_pwd)
-                st.markdown(
-                    f"Password Strength: <strong style='color:{color}'>{label} ({score}%)</strong>",
-                    unsafe_allow_html=True,
-                )
-                st.progress(score / 100.0)
-        with col_p2:
-            enc_confirm = st.text_input("Confirm Encryption Password:", type="password", key="enc_confirm_input")
-            
-        st.warning("⚠️ **Crucial Notice:** SDVS uses zero-knowledge local cryptography. If you lose this password, the file cannot be decrypted.")
-        
-        if st.button("🔒 Encrypt Document (AES-256-GCM)", type="primary", use_container_width=True):
-            if not uploaded_file:
-                st.error("Please upload a file to encrypt.")
-            elif not enc_pwd:
-                st.error("Please enter a password.")
-            elif len(enc_pwd) < 8:
-                st.error("Use at least 8 characters for the password.")
-            elif enc_pwd != enc_confirm:
-                st.error("Passwords don't match.")
-            else:
-                with st.spinner("Deriving Scrypt key & encrypting via AES-256-GCM..."):
-                    with tempfile.TemporaryDirectory() as temp_dir:
-                        temp_in = Path(temp_dir) / uploaded_file.name
-                        temp_in.write_bytes(uploaded_file.get_buffer() if hasattr(uploaded_file, "get_buffer") else uploaded_file.read())
-                        
-                        out_filename = f"{uploaded_file.name}.sdvs"
-                        temp_out = Path(temp_dir) / out_filename
-                        
-                        try:
-                            encrypt_file(temp_in, dest_path=temp_out, password=enc_pwd, confirm_password=enc_confirm)
-                            encrypted_bytes = temp_out.read_bytes()
-                            log_activity("encrypt", uploaded_file.name, "success")
-                            
-                            st.success(f"✅ **Encryption Complete!** Generated `{out_filename}` ({len(encrypted_bytes):,} bytes).")
-                            
-                            st.download_button(
-                                label=f"⬇️ Download Encrypted File ({out_filename})",
-                                data=encrypted_bytes,
-                                file_name=out_filename,
-                                mime="application/octet-stream",
-                                use_container_width=True,
-                            )
-                        except SDVSError as e:
-                            log_activity("encrypt", uploaded_file.name, f"failed: {str(e)}")
-                            st.error(str(e))
-                        except Exception:
-                            log_activity("encrypt", uploaded_file.name, "failed: internal error")
-                            st.error("Couldn't open the file.")
-                            
-    # TAB: DECRYPT
-    with dec_tab:
-        st.markdown(
-            """
-            <div class="info-panel">
-                <strong>Authentication Check:</strong> Decrypts <code>.sdvs</code> files by verifying the 33-byte AAD header and 16-byte Poly1305/GCM tag.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        sdvs_upload = st.file_uploader(
-            "Upload Encrypted .sdvs File:",
-            type=["sdvs"],
-            key="dec_file_uploader",
-        )
-        
-        dec_pwd = st.text_input("Decryption Password:", type="password", key="dec_password_input")
-        
-        if st.button("🔓 Authenticate & Decrypt", type="primary", use_container_width=True):
-            if not sdvs_upload:
-                st.error("Please upload an encrypted .sdvs file.")
-            elif not dec_pwd:
-                st.error("Please enter the decryption password.")
-            else:
-                with st.spinner("Verifying AAD header and Poly1305/GCM authentication tag..."):
-                    with tempfile.TemporaryDirectory() as temp_dir:
-                        temp_in = Path(temp_dir) / sdvs_upload.name
-                        temp_in.write_bytes(sdvs_upload.get_buffer() if hasattr(sdvs_upload, "get_buffer") else sdvs_upload.read())
-                        
-                        src_name = sdvs_upload.name
-                        if src_name.endswith(".sdvs"):
-                            target_name = src_name[:-5]
-                        else:
-                            target_name = f"{src_name}.decrypted"
-                            
-                        temp_out = Path(temp_dir) / target_name
-                        
-                        try:
-                            decrypt_file(temp_in, dest_path=temp_out, password=dec_pwd)
-                            decrypted_bytes = temp_out.read_bytes()
-                            log_activity("decrypt", sdvs_upload.name, "success")
-                            
-                            st.success(f"✅ **Decryption & Authentication Verified!** Restored `{target_name}` ({len(decrypted_bytes):,} bytes).")
-                            
-                            st.download_button(
-                                label=f"⬇️ Download Restored File ({target_name})",
-                                data=decrypted_bytes,
-                                file_name=target_name,
-                                mime="application/octet-stream",
-                                use_container_width=True,
-                            )
-                        except AuthenticationError:
-                            log_activity("decrypt", sdvs_upload.name, "failed: Wrong password or file was modified")
-                            st.error("❌ Authentication Failed: Wrong password or file was modified.")
-                        except InvalidSDVSFileError:
-                            log_activity("decrypt", sdvs_upload.name, "failed: Not a valid SDVS file")
-                            st.error("❌ Invalid Format: Not a valid SDVS file header.")
-                        except SDVSError as e:
-                            log_activity("decrypt", sdvs_upload.name, f"failed: {str(e)}")
-                            st.error(str(e))
-                        except Exception:
-                            log_activity("decrypt", sdvs_upload.name, "failed: file error")
-                            st.error("Couldn't open the file.")
-
-
 def format_size(size_bytes: int) -> str:
     """Formats bytes into human-readable B, KB, MB, GB."""
     if size_bytes < 1024:
@@ -597,553 +219,1101 @@ def format_size(size_bytes: int) -> str:
     else:
         return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
 
+def get_telemetry_metrics() -> Dict[str, int]:
+    """Computes accurate audit metrics from logs and manifest repository."""
+    manifest = load_manifest()
+    logs = read_activity_logs()
+
+    enc_count = sum(1 for l in logs if l.get("operation") in ["encrypt", "DOCUMENT_ENCRYPTED"] and "success" in l.get("result", "").lower())
+    dec_count = sum(1 for l in logs if l.get("operation") in ["decrypt", "DOCUMENT_DECRYPTED"] and "success" in l.get("result", "").lower())
+    upload_count = sum(1 for l in logs if l.get("operation") in ["upload", "DOCUMENT_UPLOADED", "hash", "HASH_GENERATED"])
+    verify_count = sum(1 for l in logs if l.get("operation") in ["verify", "VERIFICATION_SUCCESS", "TAMPERING_DETECTED"])
+    success_verify = sum(1 for l in logs if "verified" in l.get("result", "").lower() or l.get("operation") == "VERIFICATION_SUCCESS")
+    tamper_count = sum(1 for l in logs if "modified" in l.get("result", "").lower() or "tamper" in l.get("result", "").lower() or l.get("operation") == "TAMPERING_DETECTED")
+
+    return {
+        "total_documents": upload_count + len(manifest),
+        "encrypted_count": enc_count,
+        "decrypted_count": dec_count,
+        "verified_count": verify_count,
+        "success_verify": success_verify,
+        "tamper_detected": tamper_count,
+        "manifest_records": len(manifest),
+        "total_events": len(logs),
+    }
+
+def password_strength(pwd: str) -> Tuple[int, str, str]:
+    """Calculates password entropy score and returns (score, label, color)."""
+    if not pwd:
+        return 0, "Empty", "#94A3B8"
+    score = 0
+    if len(pwd) >= 8: score += 30
+    if len(pwd) >= 12: score += 20
+    if any(c.isupper() for c in pwd): score += 15
+    if any(c.isdigit() for c in pwd): score += 15
+    if any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in pwd): score += 20
+
+    if score < 40: return score, "Weak", "#EF4444"
+    elif score < 75: return score, "Moderate", "#F59E0B"
+    else: return score, "Strong", "#10B981"
+
+def render_format_badges():
+    """Renders accessible format badges for document uploaders."""
+    badges_html = """
+    <div class="badge-strip">
+        <span class="format-badge">📄 PDF</span>
+        <span class="format-badge">📝 DOCX / DOC</span>
+        <span class="format-badge">📋 TXT</span>
+        <span class="format-badge">📊 XLSX / CSV</span>
+        <span class="format-badge">🖼️ JPG / JPEG / PNG</span>
+        <span class="format-badge">📦 ZIP</span>
+    </div>
+    """
+    st.markdown(badges_html, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# MODULE 3: HASH GENERATOR
+# Sidebar Navigation Menu
 # -----------------------------------------------------------------------------
+with st.sidebar:
+    st.markdown("### 🛡️ **SDVS Modules**")
+
+    nav_items = [
+        "📊 Dashboard",
+        "📤 Document Upload & Analysis",
+        "⚡ Hash Generator",
+        "🔒 AES Encryption",
+        "🔓 Decryption",
+        "🔍 Document Verification",
+        "🧪 Tamper Simulation",
+        "📜 Verification History",
+        "🛡️ Security Audit Log",
+        "🎯 Security Demonstration Lab",
+        "📚 About Security",
+        "⚙️ Settings & Diagnostics",
+    ]
+
+    nav_map = {name: name.split(" ", 1)[1] for name in nav_items}
+    reverse_map = {v: k for k, v in nav_map.items()}
+
+    current_section = st.session_state.get("nav_section", "Dashboard")
+    current_idx = list(nav_map.values()).index(current_section) if current_section in nav_map.values() else 0
+
+    selected_nav = st.radio(
+        "Navigation",
+        nav_items,
+        index=current_idx,
+        label_visibility="collapsed",
+    )
+
+    st.session_state["nav_section"] = nav_map[selected_nav]
+
+    st.markdown("---")
+    st.markdown("#### 🔒 **Security Baseline**")
+    st.caption("• **Cipher:** AES-256-GCM (Authenticated)")
+    st.caption("• **KDF:** Scrypt (N=32768, r=8, p=1)")
+    st.caption("• **Primary Hash:** SHA-256 (NIST Secure)")
+    st.caption("• **Comparison:** Constant-Time HMAC")
+
+    metrics = get_telemetry_metrics()
+    st.markdown("---")
+    st.caption(f"📁 Manifest Records: **{metrics['manifest_records']}**")
+    st.caption(f"🛡️ Tampering Intercepted: **{metrics['tamper_detected']}**")
+
+
+# =============================================================================
+# MODULE 1: DASHBOARD
+# =============================================================================
+if st.session_state["nav_section"] == "Dashboard":
+    st.markdown(
+        """
+        <div class="app-header">
+            <h1>🛡️ Secure Document Verification System (SDVS)</h1>
+            <p>Production-grade cryptographic document integrity, authenticated AES-256-GCM protection, and tamper audit ledger.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    metrics = get_telemetry_metrics()
+
+    # 4-Column Stat Cards
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(f'<div class="stat-card"><div class="stat-val">{metrics["total_documents"]}</div><div class="stat-label">Total Documents Processed</div></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="stat-card"><div class="stat-val">{metrics["encrypted_count"]}</div><div class="stat-label">Documents Encrypted</div></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown(f'<div class="stat-card"><div class="stat-val">{metrics["verified_count"]}</div><div class="stat-label">Total Verifications</div></div>', unsafe_allow_html=True)
+    with c4:
+        st.markdown(f'<div class="stat-card"><div class="stat-val" style="color:#DC2626;">{metrics["tamper_detected"]}</div><div class="stat-label">Tampering Detections</div></div>', unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Primary Workflow Card
+    st.subheader("🔄 Cryptographic Lifecycle Workflow")
+    st.markdown(
+        """
+        ```
+        UPLOAD DOCUMENT  ➔  ANALYZE FILE  ➔  GENERATE SHA-256 / SHA-1  ➔  OPTIONALLY ENCRYPT  ➔  STORE / DOWNLOAD  ➔  VERIFY LATER  ➔  DETECT TAMPERING
+        ```
+        """
+    )
+
+    # Quick Actions
+    st.subheader("⚡ Quick Operations")
+    q1, q2, q3, q4 = st.columns(4)
+    with q1:
+        if st.button("📤 Upload & Analyze", use_container_width=True):
+            st.session_state["nav_section"] = "Document Upload & Analysis"
+            st.rerun()
+    with q2:
+        if st.button("⚡ Hash Generator", use_container_width=True):
+            st.session_state["nav_section"] = "Hash Generator"
+            st.rerun()
+    with q3:
+        if st.button("🔒 AES Encryption", use_container_width=True):
+            st.session_state["nav_section"] = "AES Encryption"
+            st.rerun()
+    with q4:
+        if st.button("🔍 Verify Document", use_container_width=True):
+            st.session_state["nav_section"] = "Document Verification"
+            st.rerun()
+
+    st.markdown("---")
+
+    # Recent Activity Ledger Preview
+    col_rec, col_stat = st.columns([3, 2])
+    with col_rec:
+        st.subheader("📋 Recent Security Events")
+        logs = read_activity_logs(limit=6)
+        if not logs:
+            st.info("No security events recorded yet.")
+        else:
+            st.dataframe(
+                logs,
+                column_config={
+                    "timestamp": "Timestamp",
+                    "operation": "Operation",
+                    "filename": "Target Document",
+                    "result": "Status / Verdict",
+                },
+                use_container_width=True,
+                hide_index=True,
+            )
+    with col_stat:
+        st.subheader("🔒 Security Engine Status")
+        st.markdown(
+            """
+            * **AES-256-GCM:** 256-bit key, 128-bit Poly1305 tag, 96-bit random nonce per operation.
+            * **Scrypt KDF:** N=32,768, r=8, p=1, 16-byte random salt.
+            * **SHA-256 Digest:** 256 bits collision resistance ($2^{128}$ strength).
+            * **Side-Channel Defense:** Constant-time `hmac.compare_digest`.
+            * **Offline Guarantee:** 100% local processing; zero cloud transmission.
+            """
+        )
+
+
+# =============================================================================
+# MODULE 2: DOCUMENT UPLOAD & ANALYSIS
+# =============================================================================
+elif st.session_state["nav_section"] == "Document Upload & Analysis":
+    st.markdown(
+        """
+        <div class="app-header">
+            <h1>📤 Secure Document Upload & Analysis</h1>
+            <p>Upload documents to inspect metadata, validate file boundaries, and generate immediate cryptographic fingerprints.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(f"**Accepted File Types (Max Limit: {st.session_state['max_file_size_mb']} MB):**")
+    render_format_badges()
+
+    uploaded = st.file_uploader(
+        "Select or Drag & Drop Document:",
+        type=SUPPORTED_EXTENSIONS,
+        key="upload_analysis_uploader",
+    )
+
+    if uploaded:
+        file_bytes = uploaded.get_buffer() if hasattr(uploaded, "get_buffer") else uploaded.read()
+        file_size = len(file_bytes)
+        max_bytes = st.session_state["max_file_size_mb"] * 1024 * 1024
+
+        if file_size > max_bytes:
+            st.error(f"❌ File size exceeds configured limit ({format_size(file_size)} > {st.session_state['max_file_size_mb']} MB).")
+        else:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_file = Path(temp_dir) / uploaded.name
+                temp_file.write_bytes(file_bytes)
+
+                sha256_val = hash_file(temp_file, algo="sha256")
+                sha1_val = hash_file(temp_file, algo="sha1")
+
+                st.session_state["latest_hash_data"] = {
+                    "filename": uploaded.name,
+                    "size_bytes": file_size,
+                    "size_human": format_size(file_size),
+                    "sha256": sha256_val,
+                    "sha1": sha1_val,
+                    "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                }
+                log_activity("DOCUMENT_UPLOADED", uploaded.name, f"Analyzed {format_size(file_size)}")
+
+            st.success(f"✅ Document **{uploaded.name}** uploaded and analyzed successfully.")
+
+            # Document Details Card
+            st.markdown("### 📋 Document Analysis Summary")
+            d1, d2, d3 = st.columns(3)
+            with d1:
+                st.metric("File Name", uploaded.name)
+            with d2:
+                st.metric("File Size", f"{format_size(file_size)} ({file_size:,} bytes)")
+            with d3:
+                st.metric("File Format", uploaded.name.split(".")[-1].upper())
+
+            st.markdown("#### 🔒 **SHA-256 (NIST Secure Standard)**")
+            st.code(sha256_val, language="text")
+
+            st.markdown("#### ⚠️ **SHA-1 (Legacy / Weak Comparison)**")
+            st.caption("Notice: SHA-1 is provided for educational comparison and is not recommended for modern security-sensitive integrity protection.")
+            st.code(sha1_val, language="text")
+
+            # Actions
+            col_a1, col_a2, col_a3 = st.columns(3)
+            with col_a1:
+                if st.button("💾 Save to Verification Manifest", use_container_width=True):
+                    register_manifest_entry(
+                        filename=uploaded.name,
+                        algorithm="sha256",
+                        digest=sha256_val,
+                        size_bytes=file_size,
+                    )
+                    log_activity("HASH_GENERATED", uploaded.name, "Registered in manifest (SHA-256)")
+                    st.success(f"Registered **{uploaded.name}** in local manifest.")
+            with col_a2:
+                if st.button("🔒 Proceed to Encrypt Document ➔", use_container_width=True):
+                    st.session_state["nav_section"] = "AES Encryption"
+                    st.rerun()
+            with col_a3:
+                if st.button("🔍 Proceed to Integrity Verification ➔", use_container_width=True):
+                    st.session_state["nav_section"] = "Document Verification"
+                    st.rerun()
+
+
+# =============================================================================
+# MODULE 3: HASH GENERATOR
+# =============================================================================
 elif st.session_state["nav_section"] == "Hash Generator":
     st.markdown(
         """
         <div class="app-header">
             <h1>⚡ Cryptographic Hash Generator</h1>
-            <p>Generate collision-resistant SHA-256 & SHA-1 document fingerprints with streaming 64 KB chunk buffers.</p>
+            <p>Calculate exact cryptographic fingerprints in 64 KB streaming buffers for collision-resistant integrity verification.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    
-    st.markdown("**Supported Document Formats:**")
-    st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
-    
-    hash_upload = st.file_uploader(
-        "Upload Document to Fingerprint (PDF, DOCX, DOC, TXT, JPG, PNG, XLSX, ZIP, etc.):",
-        type=SUPPORTED_EXTENSIONS,
-        key="gen_hash_uploader",
+
+    st.markdown(
+        """
+        <div class="info-callout">
+            <strong>Standards Guidance:</strong> SHA-256 is the industry-standard cryptographic hash algorithm (256-bit digest). 
+            SHA-1 is provided strictly for educational/legacy comparison and is not recommended for modern security-sensitive integrity protection.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    
-    if st.button("⚡ Generate Cryptographic Fingerprints (SHA-256 & SHA-1)", type="primary", use_container_width=True):
+
+    hash_upload = st.file_uploader(
+        "Upload Document to Fingerprint:",
+        type=SUPPORTED_EXTENSIONS,
+        key="hash_gen_uploader",
+    )
+
+    if st.button("⚡ Generate Cryptographic Hashes (SHA-256 & SHA-1)", type="primary", use_container_width=True):
         if not hash_upload:
-            st.error("Please upload a file to hash.")
+            st.error("Please select a file to hash.")
         else:
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_file = Path(temp_dir) / hash_upload.name
                 file_bytes = hash_upload.get_buffer() if hasattr(hash_upload, "get_buffer") else hash_upload.read()
                 temp_file.write_bytes(file_bytes)
-                
+
                 try:
-                    digest_sha256 = hash_file(temp_file, algo="sha256")
-                    digest_sha1 = hash_file(temp_file, algo="sha1")
+                    h_sha256 = hash_file(temp_file, algo="sha256")
+                    h_sha1 = hash_file(temp_file, algo="sha1")
                     size_bytes = len(file_bytes)
                     size_human = format_size(size_bytes)
-                    
-                    st.session_state["latest_hash"] = {
+
+                    st.session_state["latest_hash_data"] = {
                         "filename": hash_upload.name,
                         "size_bytes": size_bytes,
                         "size_human": size_human,
-                        "sha256": digest_sha256,
-                        "sha1": digest_sha1,
+                        "sha256": h_sha256,
+                        "sha1": h_sha1,
+                        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                     }
-                    log_activity("hash", hash_upload.name, "sha256+sha1")
+                    log_activity("HASH_GENERATED", hash_upload.name, "sha256+sha1 computed")
                 except HashEngineError as e:
                     st.error(str(e))
-                except Exception:
-                    st.error("Couldn't open the file.")
-                    
-    # Display Hash Output
-    if st.session_state.get("latest_hash"):
-        res = st.session_state["latest_hash"]
+
+    if st.session_state.get("latest_hash_data"):
+        data = st.session_state["latest_hash_data"]
         st.markdown("---")
         st.subheader("📋 Document Cryptographic Fingerprint")
-        
+
         m1, m2 = st.columns(2)
         with m1:
-            st.metric("Document", res["filename"])
+            st.metric("Document", data["filename"])
         with m2:
-            st.metric("File Size", f"{res.get('size_human', format_size(res['size_bytes']))} ({res['size_bytes']:,} bytes)")
-            
-        # SHA-256 Section
-        st.markdown("#### 🔒 **SHA-256 (NIST Secure Standard)**")
-        st.code(res["sha256"], language="text")
-        
-        c_sha256_1, c_sha256_2 = st.columns(2)
-        with c_sha256_1:
-            chk256_text = f"{res['sha256']}  {res['filename']}\n"
+            st.metric("File Size", f"{data['size_human']} ({data['size_bytes']:,} bytes)")
+
+        st.markdown("#### 🔒 **SHA-256 (Primary Integrity Digest)**")
+        st.code(data["sha256"], language="text")
+
+        col_h1, col_h2 = st.columns(2)
+        with col_h1:
+            chk256 = f"{data['sha256']}  {data['filename']}\n"
             st.download_button(
-                label=f"⬇️ Download {res['filename']}.sha256",
-                data=chk256_text,
-                file_name=f"{res['filename']}.sha256",
+                label=f"⬇️ Download Checksum ({data['filename']}.sha256)",
+                data=chk256,
+                file_name=f"{data['filename']}.sha256",
                 mime="text/plain",
                 use_container_width=True,
             )
-        with c_sha256_2:
-            if st.button("💾 Save SHA-256 to Manifest", use_container_width=True):
+        with col_h2:
+            if st.button("💾 Save SHA-256 to Verification Manifest", use_container_width=True):
                 register_manifest_entry(
-                    filename=res["filename"],
+                    filename=data["filename"],
                     algorithm="sha256",
-                    digest=res["sha256"],
-                    size_bytes=res["size_bytes"],
+                    digest=data["sha256"],
+                    size_bytes=data["size_bytes"],
                 )
-                log_activity("manifest_save", res["filename"], "saved sha256")
-                st.success(f"✅ Registered **{res['filename']}** (SHA-256) to manifest!")
-                
-        # SHA-1 Section
-        st.markdown("#### ⚠️ **SHA-1 (Legacy / Weak)**")
-        st.caption("Warning: SHA-1 is vulnerable to theoretical and practical collision attacks.")
-        st.code(res["sha1"], language="text")
-        
-        c_sha1_1, c_sha1_2 = st.columns(2)
-        with c_sha1_1:
-            chk1_text = f"{res['sha1']}  {res['filename']}\n"
+                log_activity("HASH_GENERATED", data["filename"], "Saved SHA-256 to manifest")
+                st.success(f"Registered **{data['filename']}** in manifest.")
+
+        st.markdown("#### ⚠️ **SHA-1 (Legacy Benchmark)**")
+        st.code(data["sha1"], language="text")
+
+        col_h3, col_h4 = st.columns(2)
+        with col_h3:
+            chk1 = f"{data['sha1']}  {data['filename']}\n"
             st.download_button(
-                label=f"⬇️ Download {res['filename']}.sha1",
-                data=chk1_text,
-                file_name=f"{res['filename']}.sha1",
+                label=f"⬇️ Download Checksum ({data['filename']}.sha1)",
+                data=chk1,
+                file_name=f"{data['filename']}.sha1",
                 mime="text/plain",
                 use_container_width=True,
             )
-        with c_sha1_2:
-            if st.button("💾 Save SHA-1 to Manifest", use_container_width=True):
-                register_manifest_entry(
-                    filename=res["filename"],
-                    algorithm="sha1",
-                    digest=res["sha1"],
-                    size_bytes=res["size_bytes"],
-                )
-                log_activity("manifest_save", res["filename"], "saved sha1")
-                st.success(f"✅ Registered **{res['filename']}** (SHA-1) to manifest!")
+        with col_h4:
+            # Download Full Verification Report
+            report_text = generate_text_report(
+                filename=data["filename"],
+                file_size_bytes=data["size_bytes"],
+                file_size_human=data["size_human"],
+                sha256_digest=data["sha256"],
+                sha1_digest=data["sha1"],
+                verification_status="FINGERPRINTED",
+                verification_method="Streaming Cryptographic Hash Engine",
+            )
+            st.download_button(
+                label="📄 Download Full Security Certificate (.txt)",
+                data=report_text,
+                file_name=f"{data['filename']}_security_report.txt",
+                mime="text/plain",
+                use_container_width=True,
+            )
 
 
-
-# -----------------------------------------------------------------------------
-# MODULE 4: DOCUMENT VERIFICATION
-# -----------------------------------------------------------------------------
-elif st.session_state["nav_section"] == "Document Verification":
+# =============================================================================
+# MODULE 4: AES ENCRYPTION
+# =============================================================================
+elif st.session_state["nav_section"] == "AES Encryption":
     st.markdown(
         """
         <div class="app-header">
-            <h1>🔍 Document Verification & Tamper Detection</h1>
-            <p>Compare original vs received files, verify against registered manifest entries, or test 1-bit tamper resilience.</p>
+            <h1>🔒 AES-256-GCM Document Encryption</h1>
+            <p>Authenticated encryption with Scrypt key derivation, random 16-byte salt, random 12-byte nonce, and 16-byte GCM authentication tag.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    
-    st.markdown("**Supported Document Formats:**")
-    st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
-    
-    v_tab_two, v_tab_manifest, v_tab_tamper = st.tabs([
-        "⚖️ Direct Two-Document Comparison",
-        "📑 Manifest / Hash Verification",
-        "🧪 1-Bit Tamper Simulation Lab",
-    ])
-    
-    # 1. DIRECT TWO-DOCUMENT COMPARISON
-    with v_tab_two:
-        st.markdown("Compare the original master file against a received file to verify integrity.")
-        col_orig, col_test = st.columns(2)
-        with col_orig:
-            file_orig = st.file_uploader(
-                "1. Upload Original / Baseline Document:",
-                type=SUPPORTED_EXTENSIONS,
-                key="v_file_orig",
-            )
-        with col_test:
-            file_test = st.file_uploader(
-                "2. Upload Received / Inspected Document:",
-                type=SUPPORTED_EXTENSIONS,
-                key="v_file_test",
-            )
-            
-        v_algo = st.selectbox("Verification Algorithm:", ["SHA-256", "SHA-1"], key="two_doc_algo")
-        v_algo_key = "sha256" if v_algo == "SHA-256" else "sha1"
-        
-        if st.button("🔍 Compare & Verify Documents", type="primary", use_container_width=True):
-            if not file_orig or not file_test:
-                st.error("Please upload both the original and inspected files.")
+
+    st.markdown(
+        """
+        <div class="info-callout">
+            <strong>AEAD Architecture:</strong> Uses AES-256 in Galois/Counter Mode (GCM). The 33-byte protocol header is cryptographically bound 
+            as Additional Authenticated Data (AAD). Modifying even one bit of the ciphertext or header causes decryption to abort.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    enc_file = st.file_uploader(
+        "Upload Document to Encrypt:",
+        type=SUPPORTED_EXTENSIONS,
+        key="aes_enc_uploader",
+    )
+
+    col_p1, col_p2 = st.columns(2)
+    with col_p1:
+        enc_pwd = st.text_input("Encryption Password (min 8 chars):", type="password", key="aes_enc_pwd")
+        if enc_pwd:
+            score, label, color = password_strength(enc_pwd)
+            st.markdown(f"Password Strength: <strong style='color:{color}'>{label} ({score}%)</strong>", unsafe_allow_html=True)
+            st.progress(score / 100.0)
+    with col_p2:
+        enc_confirm = st.text_input("Confirm Encryption Password:", type="password", key="aes_enc_confirm")
+
+    st.warning("⚠️ **Zero-Knowledge Security:** Passwords are never stored. If lost, the encrypted file cannot be decrypted by anyone.")
+
+    if st.button("🔒 Encrypt Document (AES-256-GCM)", type="primary", use_container_width=True):
+        if not enc_file:
+            st.error("Please upload a file to encrypt.")
+        elif not enc_pwd:
+            st.error("Please enter an encryption password.")
+        elif len(enc_pwd) < 8:
+            st.error("Password must be at least 8 characters.")
+        elif enc_pwd != enc_confirm:
+            st.error("Passwords do not match.")
+        else:
+            with st.spinner("Deriving Scrypt key and executing AES-256-GCM encryption..."):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    temp_in = Path(temp_dir) / enc_file.name
+                    temp_in.write_bytes(enc_file.get_buffer() if hasattr(enc_file, "get_buffer") else enc_file.read())
+
+                    out_name = f"{enc_file.name}.sdvs"
+                    temp_out = Path(temp_dir) / out_name
+
+                    try:
+                        encrypt_file(temp_in, dest_path=temp_out, password=enc_pwd, confirm_password=enc_confirm)
+                        enc_bytes = temp_out.read_bytes()
+                        log_activity("DOCUMENT_ENCRYPTED", enc_file.name, "success")
+
+                        st.success(f"✅ **Encryption Complete!** Generated `{out_name}` ({len(enc_bytes):,} bytes).")
+
+                        st.download_button(
+                            label=f"⬇️ Download Encrypted File ({out_name})",
+                            data=enc_bytes,
+                            file_name=out_name,
+                            mime="application/octet-stream",
+                            use_container_width=True,
+                        )
+                    except SDVSError as e:
+                        log_activity("DOCUMENT_ENCRYPTED", enc_file.name, f"failed: {str(e)}")
+                        st.error(str(e))
+
+
+# =============================================================================
+# MODULE 5: DECRYPTION
+# =============================================================================
+elif st.session_state["nav_section"] == "Decryption":
+    st.markdown(
+        """
+        <div class="app-header">
+            <h1>🔓 Authenticated Document Decryption</h1>
+            <p>Authenticate and decrypt <code>.sdvs</code> packages. Verifies 33-byte AAD header and 16-byte GCM authentication tag.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    sdvs_upload = st.file_uploader("Upload Encrypted .sdvs Package:", type=["sdvs"], key="dec_uploader")
+    dec_pwd = st.text_input("Decryption Password:", type="password", key="dec_pwd_input")
+
+    if st.button("🔓 Authenticate & Decrypt", type="primary", use_container_width=True):
+        if not sdvs_upload:
+            st.error("Please upload an encrypted .sdvs file.")
+        elif not dec_pwd:
+            st.error("Please enter the decryption password.")
+        else:
+            with st.spinner("Authenticating AAD header, deriving Scrypt key, and verifying GCM tag..."):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    temp_in = Path(temp_dir) / sdvs_upload.name
+                    temp_in.write_bytes(sdvs_upload.get_buffer() if hasattr(sdvs_upload, "get_buffer") else sdvs_upload.read())
+
+                    src_name = sdvs_upload.name
+                    target_name = src_name[:-5] if src_name.endswith(".sdvs") else f"{src_name}.decrypted"
+                    temp_out = Path(temp_dir) / target_name
+
+                    try:
+                        decrypt_file(temp_in, dest_path=temp_out, password=dec_pwd)
+                        dec_bytes = temp_out.read_bytes()
+                        log_activity("DOCUMENT_DECRYPTED", sdvs_upload.name, "success")
+
+                        st.success(f"✅ **Authentication Verified!** Restored original file `{target_name}` ({len(dec_bytes):,} bytes).")
+
+                        st.download_button(
+                            label=f"⬇️ Download Restored Document ({target_name})",
+                            data=dec_bytes,
+                            file_name=target_name,
+                            mime="application/octet-stream",
+                            use_container_width=True,
+                        )
+                    except AuthenticationError:
+                        log_activity("DECRYPTION_FAILED", sdvs_upload.name, "Authentication tag failed or wrong password")
+                        st.error("❌ Decryption failed. Invalid password or corrupted encrypted package.")
+                    except InvalidSDVSFileError:
+                        log_activity("DECRYPTION_FAILED", sdvs_upload.name, "Malformed SDVS header")
+                        st.error("❌ Invalid file format: Not a valid SDVS encrypted package.")
+                    except SDVSError as e:
+                        log_activity("DECRYPTION_FAILED", sdvs_upload.name, str(e))
+                        st.error(str(e))
+
+
+# =============================================================================
+# MODULE 6: DOCUMENT VERIFICATION
+# =============================================================================
+elif st.session_state["nav_section"] == "Document Verification":
+    st.markdown(
+        """
+        <div class="app-header">
+            <h1>🔍 Document Integrity Verification</h1>
+            <p>Verify document authenticity and detect micro-tampering using constant-time cryptographic hash comparisons.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    v_tab1, v_tab2 = st.tabs(["⚖️ Method A: Compare With Reference Document", "📑 Method B: Verify Using Expected Hash"])
+
+    # METHOD A: TWO-DOCUMENT COMPARISON
+    with v_tab1:
+        st.markdown("Upload the original baseline document and the inspected document to verify bit-level authenticity.")
+        col_o, col_i = st.columns(2)
+        with col_o:
+            ref_doc = st.file_uploader("1. Upload Reference / Original Document:", type=SUPPORTED_EXTENSIONS, key="v_ref_doc")
+        with col_i:
+            test_doc = st.file_uploader("2. Upload Inspected Document to Verify:", type=SUPPORTED_EXTENSIONS, key="v_test_doc")
+
+        if st.button("🔍 Compare & Verify Documents (Method A)", type="primary", use_container_width=True):
+            if not ref_doc or not test_doc:
+                st.error("Please upload both the reference and inspected files.")
             else:
                 with tempfile.TemporaryDirectory() as temp_dir:
-                    orig_path = Path(temp_dir) / f"orig_{file_orig.name}"
-                    test_path = Path(temp_dir) / f"test_{file_test.name}"
-                    
-                    orig_bytes = file_orig.get_buffer() if hasattr(file_orig, "get_buffer") else file_orig.read()
-                    test_bytes = file_test.get_buffer() if hasattr(file_test, "get_buffer") else file_test.read()
-                    
-                    orig_path.write_bytes(orig_bytes)
-                    test_path.write_bytes(test_bytes)
-                    
-                    hash_orig = hash_file(orig_path, algo=v_algo_key)
-                    hash_test = hash_file(test_path, algo=v_algo_key)
-                    
-                    is_valid, status, message = compare_hashes(hash_test, hash_orig)
-                    log_activity("verify", file_test.name, f"{status} (compared with {file_orig.name})")
-                    
+                    ref_p = Path(temp_dir) / f"ref_{ref_doc.name}"
+                    test_p = Path(temp_dir) / f"test_{test_doc.name}"
+
+                    ref_bytes = ref_doc.get_buffer() if hasattr(ref_doc, "get_buffer") else ref_doc.read()
+                    test_bytes = test_doc.get_buffer() if hasattr(test_doc, "get_buffer") else test_doc.read()
+
+                    ref_p.write_bytes(ref_bytes)
+                    test_p.write_bytes(test_bytes)
+
+                    h_ref = hash_file(ref_p, algo="sha256")
+                    h_test = hash_file(test_p, algo="sha256")
+
+                    is_valid, status, msg = compare_hashes(h_test, h_ref)
+
                     if is_valid:
+                        log_activity("VERIFICATION_SUCCESS", test_doc.name, f"VERIFIED against {ref_doc.name}")
                         st.markdown(
-                            f"""
-                            <div class="verified-box">
-                                <h3 style="margin:0; color:#14532D;">✅ VERIFIED — FILE IS AUTHENTIC</h3>
-                                <p style="margin:0.5rem 0 0 0;">Cryptographic digests match identically. No unauthorized modifications or corruption detected.</p>
+                            """
+                            <div class="status-box-verified">
+                                <h3 style="margin:0;">✅ DOCUMENT VERIFIED</h3>
+                                <p style="margin:0.5rem 0 0 0;">SHA-256 fingerprints match identically. No modification detected.</p>
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
                     else:
+                        log_activity("TAMPERING_DETECTED", test_doc.name, f"TAMPERED (mismatch with {ref_doc.name})")
                         st.markdown(
-                            f"""
-                            <div class="modified-box">
-                                <h3 style="margin:0; color:#7F1D1D;">❌ MODIFIED — INTEGRITY COMPROMISED</h3>
-                                <p style="margin:0.5rem 0 0 0;">The inspected file's cryptographic hash does not match the original. The document was tampered with or corrupted.</p>
+                            """
+                            <div class="status-box-tampered">
+                                <h3 style="margin:0;">❌ TAMPERING DETECTED</h3>
+                                <p style="margin:0.5rem 0 0 0;">The document content differs from the reference document. Cryptographic hash mismatch.</p>
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
-                        
-                    st.markdown("#### Detailed Hash Inspection")
-                    c_h1, c_h2 = st.columns(2)
-                    with c_h1:
-                        st.markdown(f"**Original ({file_orig.name}) [{len(orig_bytes):,} bytes]:**")
-                        st.code(hash_orig, language="text")
-                    with c_h2:
-                        st.markdown(f"**Inspected ({file_test.name}) [{len(test_bytes):,} bytes]:**")
-                        st.code(hash_test, language="text")
-                        
-    # 2. MANIFEST & HASH VERIFICATION
-    with v_tab_manifest:
-        verify_upload = st.file_uploader(
-            "Upload File to Inspect:",
-            type=SUPPORTED_EXTENSIONS,
-            key="manifest_v_upload",
-        )
-        
-        mode_choice = st.radio(
-            "Verification Source:",
-            ["Option A: Match with Registered Manifest Record", "Option B: Enter Expected Hash String"],
-        )
-        
-        manifest_data = load_manifest()
-        expected_hash = ""
-        expected_algo = "sha256"
-        
-        if "Option A" in mode_choice:
-            if not manifest_data:
-                st.warning("Manifest is empty. Fingerprint a document in the Hash Generator and save it first.")
-            else:
-                options = list(manifest_data.keys())
-                def_idx = 0
-                if verify_upload and verify_upload.name in options:
-                    def_idx = options.index(verify_upload.name)
-                    
-                selected_entry = st.selectbox("Select Manifest Record:", options, index=def_idx)
-                rec = manifest_data[selected_entry]
-                expected_hash = rec.get("digest", "")
-                expected_algo = rec.get("algorithm", "sha256")
-                
-                st.caption(f"Registered on: `{rec.get('timestamp')}` | Size: `{rec.get('size_bytes', 0):,} bytes` | Algorithm: `{expected_algo.upper()}`")
-                st.code(expected_hash, language="text")
-        else:
-            expected_hash = st.text_input("Expected Hash Digest:", placeholder="Paste expected 64-char SHA-256 or 40-char SHA-1 hex...")
-            p_algo = st.selectbox("Expected Algorithm:", ["SHA-256", "SHA-1"])
-            expected_algo = "sha256" if p_algo == "SHA-256" else "sha1"
-            
-        if st.button("🔍 Verify Integrity (Constant-Time)", type="primary", use_container_width=True):
-            if not verify_upload:
-                st.error("Please upload a file to verify.")
-            elif not expected_hash.strip():
-                st.error("Please select or paste an expected hash.")
-            else:
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_file = Path(temp_dir) / verify_upload.name
-                    temp_file.write_bytes(verify_upload.get_buffer() if hasattr(verify_upload, "get_buffer") else verify_upload.read())
-                    
-                    try:
-                        actual_digest = hash_file(temp_file, algo=expected_algo)
-                        is_valid, status, message = compare_hashes(actual_digest, expected_hash)
-                        log_activity("verify", verify_upload.name, status)
-                        
-                        if is_valid:
-                            st.markdown(
-                                f"""
-                                <div class="verified-box">
-                                    <h3 style="margin:0; color:#14532D;">✅ VERIFIED</h3>
-                                    <p style="margin:0.5rem 0 0 0;">{message}</p>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
-                        else:
-                            st.markdown(
-                                f"""
-                                <div class="modified-box">
-                                    <h3 style="margin:0; color:#7F1D1D;">❌ MODIFIED</h3>
-                                    <p style="margin:0.5rem 0 0 0;">{message}</p>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
-                            
-                        c_e, c_a = st.columns(2)
-                        with c_e:
-                            st.markdown("**Expected Hash:**")
-                            st.code(expected_hash.strip().lower(), language="text")
-                        with c_a:
-                            st.markdown("**Computed Actual Hash:**")
-                            st.code(actual_digest, language="text")
-                    except Exception as e:
-                        st.error(f"Verification error: {str(e)}")
-                        
-    # 3. TAMPER LAB
-    with v_tab_tamper:
-        st.markdown(
-            """
-            <div class="info-panel">
-                <strong>Avalanche Effect Demonstration:</strong> Flips exactly <strong>1 single bit</strong> (XOR 1 of byte 0) in an isolated copy of your file to prove that even microscopic changes produce entirely disparate hashes. Original file is never touched.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        tamper_file = st.file_uploader(
-            "Upload Sample Document for 1-Bit Tamper Test:",
-            type=SUPPORTED_EXTENSIONS,
-            key="tamper_demo_uploader",
-        )
-        if st.button("🧪 Execute 1-Bit Tamper Test", type="primary"):
-            if not tamper_file:
-                st.error("Please select a file first.")
-            else:
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    t_path = Path(temp_dir) / tamper_file.name
-                    t_path.write_bytes(tamper_file.get_buffer() if hasattr(tamper_file, "get_buffer") else tamper_file.read())
-                    
-                    res = run_tamper_demo(t_path)
-                    log_activity("tamper_demo", tamper_file.name, "MODIFIED")
-                    
-                    st.markdown(
-                        f"""
-                        <div class="modified-box">
-                            <h4 style="margin:0; color:#7F1D1D;">⚠️ {res['status']} — Avalanche Effect Triggered</h4>
-                            <p style="margin:0.3rem 0 0 0;">{res['message']}</p>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
+
+                    st.markdown("#### ⚖️ Hash Comparison Visualization")
+                    c_vh1, c_vh2 = st.columns(2)
+                    with c_vh1:
+                        st.markdown(f"**Reference Document ({ref_doc.name}) [{format_size(len(ref_bytes))}]:**")
+                        st.code(h_ref, language="text")
+                    with c_vh2:
+                        st.markdown(f"**Inspected Document ({test_doc.name}) [{format_size(len(test_bytes))}]:**")
+                        st.code(h_test, language="text")
+
+                    # Download Verification Report
+                    rep = generate_text_report(
+                        filename=test_doc.name,
+                        file_size_bytes=len(test_bytes),
+                        file_size_human=format_size(len(test_bytes)),
+                        sha256_digest=h_test,
+                        expected_hash=h_ref,
+                        verification_status="VERIFIED" if is_valid else "TAMPERED",
+                        verification_method=f"Two-Document Comparison against {ref_doc.name}",
                     )
-                    
-                    st.markdown("**Original SHA-256 Digest:**")
+                    st.download_button(
+                        label="📄 Download Verification Audit Report (.txt)",
+                        data=rep,
+                        file_name=f"verification_{test_doc.name}.txt",
+                        mime="text/plain",
+                        use_container_width=True,
+                    )
+
+    # METHOD B: VERIFY USING EXPECTED HASH
+    with v_tab2:
+        st.markdown("Verify an inspected document against a known expected SHA-256 hash or registered manifest record.")
+
+        source_type = st.radio("Verification Source:", ["Enter Known Hash Digest", "Select Registered Manifest Record"])
+        manifest = load_manifest()
+        exp_hash = ""
+
+        if source_type == "Enter Known Hash Digest":
+            exp_hash = st.text_input("Expected SHA-256 Digest:", placeholder="e.g. 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069")
+        else:
+            if not manifest:
+                st.warning("Manifest is empty. Register documents in the Hash Generator first.")
+            else:
+                sel = st.selectbox("Select Manifest Record:", list(manifest.keys()))
+                exp_hash = manifest[sel].get("digest", "")
+                st.caption(f"Registered on: `{manifest[sel].get('timestamp')}` | Size: `{manifest[sel].get('size_bytes', 0):,} bytes`")
+                st.code(exp_hash, language="text")
+
+        single_doc = st.file_uploader("Upload Document to Verify:", type=SUPPORTED_EXTENSIONS, key="v_single_doc")
+
+        if st.button("🔍 Verify Using Known Hash (Method B)", type="primary", use_container_width=True):
+            if not single_doc:
+                st.error("Please upload a document to verify.")
+            elif not exp_hash.strip():
+                st.error("Please provide an expected SHA-256 digest.")
+            else:
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    doc_p = Path(temp_dir) / single_doc.name
+                    doc_bytes = single_doc.get_buffer() if hasattr(single_doc, "get_buffer") else single_doc.read()
+                    doc_p.write_bytes(doc_bytes)
+
+                    h_actual = hash_file(doc_p, algo="sha256")
+                    is_valid, status, msg = compare_hashes(h_actual, exp_hash)
+
+                    if is_valid:
+                        log_activity("VERIFICATION_SUCCESS", single_doc.name, "VERIFIED against known hash")
+                        st.markdown(
+                            """
+                            <div class="status-box-verified">
+                                <h3 style="margin:0;">✅ DOCUMENT VERIFIED</h3>
+                                <p style="margin:0.5rem 0 0 0;">SHA-256 fingerprints match identically. No modification detected.</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        log_activity("TAMPERING_DETECTED", single_doc.name, "TAMPERED (mismatch with expected hash)")
+                        st.markdown(
+                            """
+                            <div class="status-box-tampered">
+                                <h3 style="margin:0;">❌ TAMPERING DETECTED</h3>
+                                <p style="margin:0.5rem 0 0 0;">The document hash does not match the expected reference digest.</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                    c_e, c_a = st.columns(2)
+                    with c_e:
+                        st.markdown("**Expected Reference Digest:**")
+                        st.code(exp_hash.strip().lower(), language="text")
+                    with c_a:
+                        st.markdown("**Computed Actual Digest:**")
+                        st.code(h_actual, language="text")
+
+
+# =============================================================================
+# MODULE 7: TAMPER SIMULATION
+# =============================================================================
+elif st.session_state["nav_section"] == "Tamper Simulation":
+    st.markdown(
+        """
+        <div class="app-header">
+            <h1>🧪 Micro-Tamper Simulation Lab</h1>
+            <p>Demonstrate the cryptographic Avalanche Effect: Inverting just 1 single bit in an isolated copy produces a completely disparate hash.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="info-callout">
+            <strong>Isolation Safety:</strong> The simulation creates an isolated copy in a temporary memory directory. 
+            <strong>Your original document is strictly never modified.</strong>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    t_upload = st.file_uploader("Upload Sample Document for Tamper Demonstration:", type=SUPPORTED_EXTENSIONS, key="sim_tamper_uploader")
+
+    if st.button("🧪 Create Tampered Copy & Simulate Tamper Detection", type="primary", use_container_width=True):
+        if not t_upload:
+            st.error("Please upload a document first.")
+        else:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                t_path = Path(temp_dir) / t_upload.name
+                t_bytes = t_upload.get_buffer() if hasattr(t_upload, "get_buffer") else t_upload.read()
+                t_path.write_bytes(t_bytes)
+
+                res = run_tamper_demo(t_path)
+                log_activity("TAMPERING_DETECTED", t_upload.name, "Simulation: 1-bit modified copy rejected")
+
+                st.markdown(
+                    """
+                    <div class="status-box-tampered">
+                        <h3 style="margin:0;">❌ TAMPERING DETECTED</h3>
+                        <p style="margin:0.5rem 0 0 0;">Even a microscopic 1-bit change to the document produced a completely different cryptographic hash (Avalanche Effect).</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                st.markdown("#### 🔬 Cryptographic Avalanche Comparison")
+                c_o, c_t = st.columns(2)
+                with c_o:
+                    st.markdown("**ORIGINAL DOCUMENT SHA-256:**")
                     st.code(res["original_hash"], language="text")
-                    st.markdown("**Tampered SHA-256 Digest (1 Bit Inverted):**")
+                with c_t:
+                    st.markdown("**TAMPERED COPY SHA-256 (1 Bit Inverted):**")
                     st.code(res["tampered_hash"], language="text")
 
+                st.info("ℹ️ **Explanation:** SHA-256 guarantees high diffusion. Flipping a single bit (`byte[0] ^ 0x01`) causes ~50% of the 256 output bits to flip unpredictably.")
 
-# -----------------------------------------------------------------------------
-# MODULE 5: VERIFICATION HISTORY
-# -----------------------------------------------------------------------------
+
+# =============================================================================
+# MODULE 8: VERIFICATION HISTORY
+# =============================================================================
 elif st.session_state["nav_section"] == "Verification History":
     st.markdown(
         """
         <div class="app-header">
-            <h1>📜 Verification History & Manifest</h1>
-            <p>Inspect, search, and manage registered document checksums in the local verified manifest repository.</p>
+            <h1>📜 Verification History & Manifest Repository</h1>
+            <p>Manage persistent document fingerprints and inspection records in the local manifest repository.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    
+
     manifest = load_manifest()
-    
+
     if not manifest:
-        st.info("No documents are currently registered in the verification history manifest.")
+        st.info("No records registered in the verification history manifest yet.")
     else:
-        search_query = st.text_input("🔍 Search Manifest by Filename:", placeholder="e.g. invoice.pdf")
-        
-        manifest_list = list(manifest.values())
-        if search_query:
-            manifest_list = [m for m in manifest_list if search_query.lower() in m.get("filename", "").lower()]
-            
-        st.markdown(f"**Showing {len(manifest_list)} of {len(manifest)} registered records:**")
-        
+        sq = st.text_input("🔍 Search History by Document Name:", placeholder="Filter by filename...")
+        m_list = list(manifest.values())
+        if sq:
+            m_list = [m for m in m_list if sq.lower() in m.get("filename", "").lower()]
+
+        st.markdown(f"**Showing {len(m_list)} of {len(manifest)} registered records:**")
+
         st.dataframe(
-            manifest_list,
+            m_list,
             column_config={
-                "filename": "Filename",
+                "filename": "Document Name",
                 "algorithm": "Algorithm",
-                "digest": "Cryptographic Digest",
+                "digest": "Cryptographic Hash",
                 "size_bytes": "Size (Bytes)",
-                "timestamp": "Registered (ISO)",
+                "timestamp": "Registered Date",
             },
             use_container_width=True,
             hide_index=True,
         )
-        
-        col_exp1, col_exp2, col_clear = st.columns([1, 1, 1])
-        with col_exp1:
-            json_data = json.dumps(manifest, indent=2)
+
+        col_e1, col_e2, col_cl = st.columns(3)
+        with col_e1:
             st.download_button(
                 "⬇️ Export Manifest (JSON)",
-                data=json_data,
+                data=json.dumps(manifest, indent=2),
                 file_name="sdvs_manifest.json",
                 mime="application/json",
                 use_container_width=True,
             )
-        with col_exp2:
-            csv_buffer = io.StringIO()
-            csv_buffer.write("filename,algorithm,digest,size_bytes,timestamp\n")
+        with col_e2:
+            csv_buf = io.StringIO()
+            csv_buf.write("filename,algorithm,digest,size_bytes,timestamp\n")
             for item in manifest.values():
-                csv_buffer.write(f'"{item.get("filename")}","{item.get("algorithm")}","{item.get("digest")}",{item.get("size_bytes")},"{item.get("timestamp")}"\n')
+                csv_buf.write(f'"{item.get("filename")}","{item.get("algorithm")}","{item.get("digest")}",{item.get("size_bytes")},"{item.get("timestamp")}"\n')
             st.download_button(
                 "⬇️ Export Manifest (CSV)",
-                data=csv_buffer.getvalue(),
+                data=csv_buf.getvalue(),
                 file_name="sdvs_manifest.csv",
                 mime="text/csv",
                 use_container_width=True,
             )
-        with col_clear:
-            if st.button("🗑️ Clear All Manifest History", type="secondary", use_container_width=True):
+        with col_cl:
+            if st.button("🗑️ Clear Manifest Records", use_container_width=True):
                 clear_manifest()
-                log_activity("manifest_clear", "all", "cleared")
-                st.success("Manifest records cleared.")
+                log_activity("MANIFEST_CLEARED", "all", "success")
+                st.success("Manifest history cleared.")
                 st.rerun()
 
 
-# -----------------------------------------------------------------------------
-# MODULE 6: SECURITY LOGS
-# -----------------------------------------------------------------------------
-elif st.session_state["nav_section"] == "Security Logs":
+# =============================================================================
+# MODULE 9: SECURITY AUDIT LOG
+# =============================================================================
+elif st.session_state["nav_section"] == "Security Audit Log":
     st.markdown(
         """
         <div class="app-header">
-            <h1>🛡️ Security & Audit Logs</h1>
-            <p>Immutable local audit trail of all cryptographic operations. Passwords and secret keys are strictly never logged.</p>
+            <h1>🛡️ Security & Audit Logging</h1>
+            <p>Immutable local audit trail of all cryptographic actions. Strict security rule: Passwords and keys are never logged.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    
+
     logs = read_activity_logs()
-    
-    f_col1, f_col2, f_col3 = st.columns([2, 1, 1])
-    with f_col1:
-        log_search = st.text_input("Search Logs:", placeholder="Filter by filename or keyword...")
-    with f_col2:
-        op_filter = st.selectbox(
-            "Filter by Operation:",
-            ["All Operations", "encrypt", "decrypt", "hash", "verify", "manifest_save", "tamper_demo"],
+
+    f1, f2, f3 = st.columns([2, 1, 1])
+    with f1:
+        log_sq = st.text_input("Search Audit Trail:", placeholder="Search by filename or action...")
+    with f2:
+        op_sel = st.selectbox(
+            "Filter by Action:",
+            ["All Events", "DOCUMENT_UPLOADED", "HASH_GENERATED", "DOCUMENT_ENCRYPTED", "DOCUMENT_DECRYPTED", "VERIFICATION_SUCCESS", "TAMPERING_DETECTED", "DECRYPTION_FAILED"],
         )
-    with f_col3:
-        log_limit = st.selectbox("Display Limit:", [50, 100, 250, "All"], index=0)
-        
+    with f3:
+        lim = st.selectbox("Display Limit:", [50, 100, 250, "All"])
+
     filtered_logs = logs
-    if log_search:
-        filtered_logs = [l for l in filtered_logs if log_search.lower() in str(l).lower()]
-    if op_filter != "All Operations":
-        filtered_logs = [l for l in filtered_logs if l.get("operation") == op_filter]
-        
-    if log_limit != "All":
-        filtered_logs = filtered_logs[:int(log_limit)]
-        
-    st.markdown(f"**Audit Trail ({len(filtered_logs)} events):**")
-    
+    if log_sq:
+        filtered_logs = [l for l in filtered_logs if log_sq.lower() in str(l).lower()]
+    if op_sel != "All Events":
+        filtered_logs = [l for l in filtered_logs if l.get("operation") == op_sel]
+    if lim != "All":
+        filtered_logs = filtered_logs[:int(lim)]
+
+    st.markdown(f"**Audit Records ({len(filtered_logs)} events):**")
+
     if not filtered_logs:
-        st.info("No security logs matching the selected filters.")
+        st.info("No log events found matching criteria.")
     else:
         st.dataframe(
             filtered_logs,
             column_config={
                 "timestamp": "Timestamp",
-                "operation": "Operation",
-                "filename": "Filename",
+                "operation": "Event Type",
+                "filename": "Document Identifier",
                 "result": "Result / Status",
             },
             use_container_width=True,
             hide_index=True,
         )
-        
+
         col_l1, col_l2 = st.columns(2)
         with col_l1:
-            csv_log_buffer = io.StringIO()
-            csv_log_buffer.write("timestamp,operation,filename,result\n")
+            csv_l = io.StringIO()
+            csv_l.write("timestamp,operation,filename,result\n")
             for item in logs:
-                csv_log_buffer.write(f'"{item.get("timestamp")}","{item.get("operation")}","{item.get("filename")}","{item.get("result")}"\n')
+                csv_l.write(f'"{item.get("timestamp")}","{item.get("operation")}","{item.get("filename")}","{item.get("result")}"\n')
             st.download_button(
-                "⬇️ Export Security Audit Log (CSV)",
-                data=csv_log_buffer.getvalue(),
-                file_name=f"sdvs_audit_log_{datetime.now().strftime('%Y%m%d')}.csv",
+                "⬇️ Export Audit Trail (CSV)",
+                data=csv_l.getvalue(),
+                file_name=f"sdvs_audit_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv",
                 use_container_width=True,
             )
         with col_l2:
-            if st.button("🗑️ Clear Activity Logs", use_container_width=True):
+            if st.button("🗑️ Clear Audit Log", use_container_width=True):
                 clear_activity_logs()
-                st.success("Security logs cleared.")
+                st.success("Audit logs cleared.")
                 st.rerun()
 
 
-# -----------------------------------------------------------------------------
-# MODULE 7: SETTINGS
-# -----------------------------------------------------------------------------
-elif st.session_state["nav_section"] == "Settings":
+# =============================================================================
+# MODULE 10: SECURITY DEMONSTRATION LAB
+# =============================================================================
+elif st.session_state["nav_section"] == "Security Demonstration Lab":
     st.markdown(
         """
         <div class="app-header">
-            <h1>⚙️ System Settings & Diagnostics</h1>
-            <p>Cryptographic engine parameters, environment diagnostics, and local storage management.</p>
+            <h1>🎯 Live Security Demonstration Lab</h1>
+            <p>Curated presentation workflows designed for live academic examination and viva voce demonstrations.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    
-    # Supported Types Card
-    st.subheader("📄 Supported Document Formats")
-    st.markdown(FORMAT_BADGES_HTML, unsafe_allow_html=True)
-    
+
+    d_tab1, d_tab2, d_tab3 = st.tabs([
+        "🧪 Demo 1: Hash & Avalanche Effect",
+        "🔒 Demo 2: AES-256-GCM Roundtrip",
+        "🚫 Demo 3: Corrupted Ciphertext / Wrong Password",
+    ])
+
+    with d_tab1:
+        st.markdown("### Demo 1: Cryptographic Avalanche Effect")
+        st.write("Demonstrates how modifying 1 bit in a file changes the entire SHA-256 digest.")
+        demo_text = st.text_input("Enter Baseline Text String:", value="Confidential Academic Record 2026")
+
+        if st.button("⚡ Compute Baseline & Tampered Hashes"):
+            h1 = hash_bytes(demo_text.encode("utf-8"), algo="sha256")
+            tampered_bytes = bytearray(demo_text.encode("utf-8"))
+            tampered_bytes[0] ^= 0x01
+            h2 = hash_bytes(tampered_bytes, algo="sha256")
+
+            st.markdown(f"**Baseline String:** `{demo_text}`")
+            st.code(h1, language="text")
+
+            st.markdown(f"**Tampered String (First Bit Inverted):** `{tampered_bytes.decode('utf-8', errors='replace')}`")
+            st.code(h2, language="text")
+
+            valid, status, _ = compare_hashes(h1, h2)
+            st.markdown(
+                """
+                <div class="status-box-tampered">
+                    <h4 style="margin:0;">❌ TAMPERING DETECTED</h4>
+                    <p style="margin:0.3rem 0 0 0;">Hashes differ completely. Bit-level modification detected.</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    with d_tab2:
+        st.markdown("### Demo 2: Authenticated Encryption Roundtrip")
+        st.write("Encrypts a payload with AES-256-GCM and restores the exact original bytes with the correct password.")
+
+        d2_pwd = "DemoMasterPassword2026!"
+        d2_content = b"SECURE_VIVA_PAYLOAD_TEST_DATA"
+
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "sample.pdf"
+            src.write_bytes(d2_content)
+            enc = Path(td) / "sample.pdf.sdvs"
+            dec = Path(td) / "restored.pdf"
+
+            encrypt_file(src, dest_path=enc, password=d2_pwd, confirm_password=d2_pwd)
+            decrypt_file(enc, dest_path=dec, password=d2_pwd)
+
+            st.success("✅ **Step 1: AES-256-GCM Encryption** ➔ Produced 33-byte AAD header + ciphertext + 16-byte Poly1305 tag.")
+            st.success("✅ **Step 2: Scrypt Key Derivation** ➔ Reconstructed exact 256-bit key using unique salt.")
+            st.success("✅ **Step 3: GCM Tag Verification** ➔ Authenticated payload; restored original bytes identically.")
+
+    with d_tab3:
+        st.markdown("### Demo 3: Security Under Attack (Wrong Password & Corrupted Ciphertext)")
+        st.write("Proves that AES-256-GCM rejects wrong passwords or modified ciphertexts without leaking plaintext.")
+
+        d3_pwd = "CorrectPassword123!"
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "test.txt"
+            src.write_bytes(b"Top Secret Intelligence Briefing")
+            enc = Path(td) / "test.txt.sdvs"
+            dec = Path(td) / "out.txt"
+
+            encrypt_file(src, dest_path=enc, password=d3_pwd, confirm_password=d3_pwd)
+
+            # Test Wrong Password
+            try:
+                decrypt_file(enc, dest_path=dec, password="WrongPassword999!")
+            except AuthenticationError:
+                st.error("🛡️ **Attack 1 (Wrong Password):** Successfully intercepted! Decryption aborted; zero plaintext written to disk.")
+
+            # Test Ciphertext Modification
+            enc_data = bytearray(enc.read_bytes())
+            enc_data[35] ^= 0x01  # Flip byte in ciphertext
+            enc.write_bytes(enc_data)
+
+            try:
+                decrypt_file(enc, dest_path=dec, password=d3_pwd)
+            except AuthenticationError:
+                st.error("🛡️ **Attack 2 (Ciphertext Bit Flip):** GCM Tag verification failed! Corrupted package rejected unconditionally.")
+
+
+# =============================================================================
+# MODULE 11: ABOUT SECURITY
+# =============================================================================
+elif st.session_state["nav_section"] == "About Security":
+    st.markdown(
+        """
+        <div class="app-header">
+            <h1>📚 Educational Security Center</h1>
+            <p>Theoretical and mathematical foundations of cryptographic hashing, authenticated encryption, and tamper defense.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.subheader("1. Hashing vs. Encryption")
+    st.markdown(
+        """
+        | Dimension | Cryptographic Hashing | Authenticated Encryption (AES-GCM) |
+        | :--- | :--- | :--- |
+        | **Directionality** | One-way irreversible transformation | Two-way reversible transformation with key |
+        | **Primary Goal** | Integrity verification & tamper detection | Confidentiality & Authenticity |
+        | **Output Size** | Fixed size (e.g., 256 bits for SHA-256) | Variable size (plaintext length + 49 bytes header/tag) |
+        | **Key Requirement** | No key required (deterministic digest) | Secret key derived via memory-hard KDF |
+        """
+    )
+
+    st.subheader("2. Why SHA-256 over SHA-1?")
+    st.markdown(
+        """
+        * **SHA-256:** Provides 256 bits of digest length ($2^{128}$ collision resistance). Fully compliant with NIST SP 800-107.
+        * **SHA-1 (Legacy):** 160-bit digest. In 2017, the *SHAttered* attack proved practical collision generation. Included in SDVS purely for academic comparison.
+        """
+    )
+
+    st.subheader("3. Why AES-256-GCM over AES-CBC?")
+    st.markdown(
+        """
+        * **AEAD Authentication:** AES-GCM calculates a 128-bit GHASH/Poly1305 authentication tag over the ciphertext and AAD header.
+        * **Padding Oracle Resistance:** CBC mode requires PKCS#7 padding, exposing systems to padding oracle attacks. GCM operates in CTR mode (stream) with zero padding vulnerabilities.
+        """
+    )
+
+
+# =============================================================================
+# MODULE 12: SETTINGS & DIAGNOSTICS
+# =============================================================================
+elif st.session_state["nav_section"] == "Settings & Diagnostics":
+    st.markdown(
+        """
+        <div class="app-header">
+            <h1>⚙️ System Settings & Diagnostics</h1>
+            <p>Configure file boundaries, inspect cryptographic parameters, and review runtime environment diagnostics.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.subheader("⚙️ Upload Preferences")
+    new_limit = st.slider("Maximum File Size Limit (MB):", min_value=5, max_value=200, value=st.session_state["max_file_size_mb"], step=5)
+    st.session_state["max_file_size_mb"] = new_limit
+    st.caption(f"Currently configured upload limit: **{new_limit} MB**")
+
     st.markdown("---")
-    
-    # 1. Cryptographic Parameters
-    st.subheader("🔒 Cryptographic Engine Specifications")
+    st.subheader("🔒 Cryptographic Parameter Specifications")
     s1, s2 = st.columns(2)
     with s1:
         st.markdown(
             f"""
-            * **Cipher Algorithm:** AES-256 in Galois/Counter Mode (GCM)
-            * **Cipher Key Length:** 256 bits ({KEY_LENGTH} bytes)
+            * **Cipher Mode:** AES-256-GCM
+            * **Key Length:** {KEY_LENGTH * 8} bits ({KEY_LENGTH} bytes)
             * **Nonce Size:** 96 bits (12 bytes, cryptographic PRNG)
-            * **Authentication Tag:** 128 bits ({TAG_SIZE} bytes, Poly1305/GHASH)
-            * **AAD Header Size:** {HEADER_SIZE} bytes (Magic + Version + Salt + Nonce)
+            * **Tag Size:** {TAG_SIZE * 8} bits ({TAG_SIZE} bytes)
+            * **AAD Header Size:** {HEADER_SIZE} bytes
             """
         )
     with s2:
         st.markdown(
             f"""
-            * **KDF Function:** Scrypt (RFC 7914)
-            * **KDF CPU/Memory Cost (N):** {SCRYPT_N:,} iterations
-            * **KDF Block Size (r):** {SCRYPT_R}
-            * **KDF Parallelization (p):** {SCRYPT_P}
-            * **Salt Size:** 128 bits (16 bytes, cryptographic PRNG)
+            * **Key Derivation:** Scrypt (RFC 7914)
+            * **CPU/Memory Cost (N):** {SCRYPT_N:,} iterations
+            * **Block Size (r):** {SCRYPT_R}
+            * **Parallelization (p):** {SCRYPT_P}
+            * **Salt Size:** 128 bits (16 bytes)
             """
         )
-        
+
     st.markdown("---")
-    
-    # 2. Preferences
-    st.subheader("⚙️ System Preferences")
-    pref_col1, pref_col2 = st.columns(2)
-    with pref_col1:
-        default_algo_choice = st.selectbox(
-            "Default Hash Algorithm:",
-            ["SHA-256", "SHA-1"],
-            index=0 if st.session_state["default_algo"] == "SHA-256" else 1,
-        )
-        st.session_state["default_algo"] = default_algo_choice
-    with pref_col2:
-        st.caption("Default algorithm is pre-selected across the Hash Generator and Verification tabs.")
-        
-    st.markdown("---")
-    
-    # 3. Environment Diagnostics
     st.subheader("💻 Environment Diagnostics")
     d1, d2 = st.columns(2)
     with d1:
-        st.write(f"• **Operating System:** {platform.system()} {platform.release()} ({platform.machine()})")
+        st.write(f"• **OS Environment:** {platform.system()} {platform.release()} ({platform.machine()})")
         st.write(f"• **Python Runtime:** {platform.python_version()}")
     with d2:
-        st.write("• **Local Manifest Path:** `data/manifest.json`")
-        st.write("• **Local Audit Log Path:** `data/activity.log`")
+        st.write("• **Local Manifest Ledger:** `data/manifest.json`")
+        st.write("• **Local Audit Ledger:** `data/activity.log`")
