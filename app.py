@@ -1,18 +1,18 @@
-"""Secure Document Verification System (SDVS) - Production Web Application.
+"""Secure Document Verification System (SDVS) - Next-Gen Cybersecurity UI.
 
-A complete cybersecurity application demonstrating:
-1. Dashboard with live security telemetry and audit metrics.
-2. Secure Document Upload & Metadata Analysis.
-3. Cryptographic Hash Generator (SHA-256 NIST standard & SHA-1 legacy benchmark).
-4. AES-256-GCM Authenticated Encryption with Scrypt KDF.
-5. Decryption & Integrity Authentication Engine.
-6. Document Integrity Verification (Two-Document & Expected Hash comparison).
-7. Tamper Simulation Lab (1-Bit Avalanche Effect demonstration).
-8. Verification History & Manifest Management.
-9. Security Audit Logging (Immutable, secret-sanitized trail).
+Production-grade cryptographic security suite with a premium SaaS interface:
+1. Interactive Dashboard with KPI cards and live system telemetry.
+2. High-speed Drag & Drop Document Analysis with instant multi-format fingerprinting.
+3. Dual-Algorithm Hash Engine (SHA-256 primary + SHA-1 legacy) with checksum exports.
+4. Authenticated AES-256-GCM Encryption with Scrypt KDF & entropy strength meter.
+5. Authenticated Decryption with AAD validation & zero-plaintext-leakage defense.
+6. Constant-Time Document Integrity Verification (Two-Document & Manifest modes).
+7. Tamper Simulation Lab demonstrating the Avalanche Effect.
+8. Persistent Verification History & Manifest Repository.
+9. Real-Time Immutable Security Audit Trail.
 10. Live Security Demonstration Lab (3 Guided Viva Demos).
-11. Educational Center ("About Security").
-12. System Settings, Storage Inspector & Environment Diagnostics.
+11. Educational Security Center & Threat Defense Specifications.
+12. Configurable Diagnostics & Storage Management.
 """
 
 import io
@@ -22,7 +22,7 @@ import platform
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 
 import streamlit as st
 
@@ -62,13 +62,13 @@ from logger import log_activity, read_activity_logs, clear_activity_logs
 from reports import generate_text_report
 
 # -----------------------------------------------------------------------------
-# Configuration & Constants
+# Configuration Constants
 # -----------------------------------------------------------------------------
 SUPPORTED_EXTENSIONS = ["pdf", "doc", "docx", "txt", "xlsx", "csv", "jpg", "jpeg", "png", "zip"]
 DEFAULT_MAX_FILE_SIZE_MB = 50
 
 # -----------------------------------------------------------------------------
-# Streamlit Page Setup
+# Page Configuration
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="SDVS - Secure Document Verification System",
@@ -78,112 +78,215 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Professional Cybersecurity CSS (Clean, Modern, Accessible)
+# Ultra-Premium Cybersecurity Design System (CSS)
 # -----------------------------------------------------------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
     
-    html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    html, body, [class*="css"], .stApp {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    .code, code, pre, .hash-code {
+    .code, code, pre, .hash-code, .stCode {
         font-family: 'JetBrains Mono', monospace !important;
     }
     
-    /* Header Container */
-    .app-header {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-        border: 1px solid #334155;
-        border-radius: 10px;
-        padding: 1.3rem 1.6rem;
-        margin-bottom: 1.4rem;
-        color: #F8FAFC;
-    }
-    .app-header h1 {
-        font-size: 1.7rem;
-        font-weight: 700;
-        margin: 0 0 0.3rem 0;
-        color: #FFFFFF;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .app-header p {
-        font-size: 0.92rem;
-        color: #94A3B8;
-        margin: 0;
+    /* Global App Background & Container */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1240px;
     }
     
-    /* Professional Stat Cards */
-    .stat-card {
+    /* Modern Cyber Hero Header */
+    .sdvs-hero {
+        background: radial-gradient(120% 120% at 50% 10%, #1E293B 0%, #0F172A 70%, #020617 100%);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 14px;
+        padding: 2rem 2.2rem;
+        margin-bottom: 1.8rem;
+        color: #F8FAFC;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+    }
+    .sdvs-hero::after {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        background: linear-gradient(90deg, rgba(2, 132, 199, 0.08) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    .sdvs-hero h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0 0 0.4rem 0;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #FFFFFF 30%, #38BDF8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .sdvs-hero p {
+        font-size: 0.98rem;
+        color: #94A3B8;
+        margin: 0 0 1rem 0;
+        max-width: 820px;
+        line-height: 1.5;
+    }
+    
+    /* Cyber Pill Chips */
+    .cyber-pill-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .cyber-pill {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        color: #38BDF8;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    
+    /* Modern Stat Cards */
+    .sdvs-kpi-card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 1.1rem;
+        border-radius: 12px;
+        padding: 1.3rem 1.1rem;
         text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        position: relative;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
-    .stat-val {
-        font-size: 1.8rem;
-        font-weight: 700;
+    .sdvs-kpi-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08);
+        border-color: #38BDF8;
+    }
+    .sdvs-kpi-card.cyan { border-top: 4px solid #0284C7; }
+    .sdvs-kpi-card.emerald { border-top: 4px solid #10B981; }
+    .sdvs-kpi-card.purple { border-top: 4px solid #8B5CF6; }
+    .sdvs-kpi-card.rose { border-top: 4px solid #F43F5E; }
+    
+    .sdvs-kpi-val {
+        font-size: 2.1rem;
+        font-weight: 800;
         color: #0F172A;
-        margin-bottom: 0.1rem;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin-bottom: 0.25rem;
     }
-    .stat-label {
+    .sdvs-kpi-label {
         font-size: 0.8rem;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.06em;
         color: #64748B;
     }
     
-    /* Accessible Status Verdict Boxes */
-    .status-box-verified {
-        background-color: #F0FDF4;
-        border: 2px solid #16A34A;
-        border-radius: 8px;
-        padding: 1.2rem 1.4rem;
-        color: #14532D;
-        margin: 1rem 0;
+    /* Status Result Banners */
+    .verdict-banner-verified {
+        background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+        border: 2px solid #059669;
+        border-radius: 10px;
+        padding: 1.4rem 1.6rem;
+        color: #064E3B;
+        margin: 1.2rem 0;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
     }
-    .status-box-tampered {
-        background-color: #FEF2F2;
+    .verdict-banner-tampered {
+        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
         border: 2px solid #DC2626;
-        border-radius: 8px;
-        padding: 1.2rem 1.4rem;
+        border-radius: 10px;
+        padding: 1.4rem 1.6rem;
         color: #7F1D1D;
-        margin: 1rem 0;
+        margin: 1.2rem 0;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
     }
     
-    /* Info Panels */
-    .info-callout {
+    /* Callout & Instruction Cards */
+    .callout-box {
         background: #F8FAFC;
+        border: 1px solid #E2E8F0;
         border-left: 4px solid #0284C7;
-        border-radius: 0 6px 6px 0;
-        padding: 0.85rem 1.1rem;
-        margin-bottom: 1.1rem;
+        border-radius: 8px;
+        padding: 1rem 1.3rem;
+        margin-bottom: 1.3rem;
         color: #334155;
-        font-size: 0.92rem;
+        font-size: 0.93rem;
+        line-height: 1.5;
     }
     
     /* Format Badges */
-    .badge-strip {
+    .format-strip {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.35rem;
-        margin: 0.5rem 0 0.9rem 0;
+        gap: 0.4rem;
+        margin: 0.6rem 0 1.1rem 0;
     }
-    .format-badge {
+    .fmt-badge {
         background: #F1F5F9;
         border: 1px solid #CBD5E1;
-        color: #334155;
-        padding: 0.18rem 0.55rem;
-        border-radius: 4px;
+        color: #1E293B;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
         font-size: 0.78rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    /* Pulse Live Status Dot */
+    .live-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #059669;
+        background: #ECFDF5;
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        border: 1px solid #A7F3D0;
+    }
+    .pulse-dot {
+        width: 7px;
+        height: 7px;
+        background-color: #10B981;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Custom Streamlit Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.5rem;
+        background-color: #F1F5F9;
+        padding: 0.35rem;
+        border-radius: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 7px;
+        padding: 0.5rem 1rem;
         font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #FFFFFF !important;
+        color: #0284C7 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
     </style>
     """,
@@ -191,7 +294,7 @@ st.markdown(
 )
 
 # -----------------------------------------------------------------------------
-# Session State Initialization
+# Session State Setup
 # -----------------------------------------------------------------------------
 if "nav_section" not in st.session_state:
     st.session_state["nav_section"] = "Dashboard"
@@ -199,17 +302,14 @@ if "nav_section" not in st.session_state:
 if "max_file_size_mb" not in st.session_state:
     st.session_state["max_file_size_mb"] = DEFAULT_MAX_FILE_SIZE_MB
 
-if "latest_uploaded_file" not in st.session_state:
-    st.session_state["latest_uploaded_file"] = None
-
 if "latest_hash_data" not in st.session_state:
     st.session_state["latest_hash_data"] = None
 
 # -----------------------------------------------------------------------------
-# Helper Functions
+# Utility Functions
 # -----------------------------------------------------------------------------
 def format_size(size_bytes: int) -> str:
-    """Formats bytes into human-readable B, KB, MB, GB."""
+    """Formats raw bytes into human-readable B, KB, MB, GB."""
     if size_bytes < 1024:
         return f"{size_bytes} B"
     elif size_bytes < 1024 * 1024:
@@ -220,7 +320,7 @@ def format_size(size_bytes: int) -> str:
         return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
 
 def get_telemetry_metrics() -> Dict[str, int]:
-    """Computes accurate audit metrics from logs and manifest repository."""
+    """Extracts live operational metrics from audit records and manifest store."""
     manifest = load_manifest()
     logs = read_activity_logs()
 
@@ -228,7 +328,6 @@ def get_telemetry_metrics() -> Dict[str, int]:
     dec_count = sum(1 for l in logs if l.get("operation") in ["decrypt", "DOCUMENT_DECRYPTED"] and "success" in l.get("result", "").lower())
     upload_count = sum(1 for l in logs if l.get("operation") in ["upload", "DOCUMENT_UPLOADED", "hash", "HASH_GENERATED"])
     verify_count = sum(1 for l in logs if l.get("operation") in ["verify", "VERIFICATION_SUCCESS", "TAMPERING_DETECTED"])
-    success_verify = sum(1 for l in logs if "verified" in l.get("result", "").lower() or l.get("operation") == "VERIFICATION_SUCCESS")
     tamper_count = sum(1 for l in logs if "modified" in l.get("result", "").lower() or "tamper" in l.get("result", "").lower() or l.get("operation") == "TAMPERING_DETECTED")
 
     return {
@@ -236,14 +335,13 @@ def get_telemetry_metrics() -> Dict[str, int]:
         "encrypted_count": enc_count,
         "decrypted_count": dec_count,
         "verified_count": verify_count,
-        "success_verify": success_verify,
         "tamper_detected": tamper_count,
         "manifest_records": len(manifest),
         "total_events": len(logs),
     }
 
 def password_strength(pwd: str) -> Tuple[int, str, str]:
-    """Calculates password entropy score and returns (score, label, color)."""
+    """Evaluates password entropy and returns (score, label, color)."""
     if not pwd:
         return 0, "Empty", "#94A3B8"
     score = 0
@@ -258,24 +356,26 @@ def password_strength(pwd: str) -> Tuple[int, str, str]:
     else: return score, "Strong", "#10B981"
 
 def render_format_badges():
-    """Renders accessible format badges for document uploaders."""
+    """Renders accessible format badges."""
     badges_html = """
-    <div class="badge-strip">
-        <span class="format-badge">📄 PDF</span>
-        <span class="format-badge">📝 DOCX / DOC</span>
-        <span class="format-badge">📋 TXT</span>
-        <span class="format-badge">📊 XLSX / CSV</span>
-        <span class="format-badge">🖼️ JPG / JPEG / PNG</span>
-        <span class="format-badge">📦 ZIP</span>
+    <div class="format-strip">
+        <span class="fmt-badge">📄 PDF</span>
+        <span class="fmt-badge">📝 DOCX / DOC</span>
+        <span class="fmt-badge">📋 TXT</span>
+        <span class="fmt-badge">📊 XLSX / CSV</span>
+        <span class="fmt-badge">🖼️ JPG / JPEG / PNG</span>
+        <span class="fmt-badge">📦 ZIP</span>
     </div>
     """
     st.markdown(badges_html, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# Sidebar Navigation Menu
+# Sidebar Navigation & System Telemetry
 # -----------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 🛡️ **SDVS Modules**")
+    st.markdown("## 🛡️ **SDVS Core**")
+    st.markdown('<div class="live-indicator"><span class="pulse-dot"></span> LOCAL ENGINE READY</div>', unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
     nav_items = [
         "📊 Dashboard",
@@ -293,8 +393,6 @@ with st.sidebar:
     ]
 
     nav_map = {name: name.split(" ", 1)[1] for name in nav_items}
-    reverse_map = {v: k for k, v in nav_map.items()}
-
     current_section = st.session_state.get("nav_section", "Dashboard")
     current_idx = list(nav_map.values()).index(current_section) if current_section in nav_map.values() else 0
 
@@ -308,16 +406,16 @@ with st.sidebar:
     st.session_state["nav_section"] = nav_map[selected_nav]
 
     st.markdown("---")
-    st.markdown("#### 🔒 **Security Baseline**")
-    st.caption("• **Cipher:** AES-256-GCM (Authenticated)")
+    st.markdown("#### 🔒 **Cryptographic Specs**")
+    st.caption("• **Cipher:** AES-256-GCM (AEAD)")
     st.caption("• **KDF:** Scrypt (N=32768, r=8, p=1)")
-    st.caption("• **Primary Hash:** SHA-256 (NIST Secure)")
-    st.caption("• **Comparison:** Constant-Time HMAC")
+    st.caption("• **Hash:** SHA-256 (256-bit NIST)")
+    st.caption("• **Verification:** Constant-Time HMAC")
 
     metrics = get_telemetry_metrics()
     st.markdown("---")
     st.caption(f"📁 Manifest Records: **{metrics['manifest_records']}**")
-    st.caption(f"🛡️ Tampering Intercepted: **{metrics['tamper_detected']}**")
+    st.caption(f"🛡️ Tampering Blocked: **{metrics['tamper_detected']}**")
 
 
 # =============================================================================
@@ -326,9 +424,16 @@ with st.sidebar:
 if st.session_state["nav_section"] == "Dashboard":
     st.markdown(
         """
-        <div class="app-header">
-            <h1>🛡️ Secure Document Verification System (SDVS)</h1>
-            <p>Production-grade cryptographic document integrity, authenticated AES-256-GCM protection, and tamper audit ledger.</p>
+        <div class="sdvs-hero">
+            <h1>🛡️ Secure Document Verification System</h1>
+            <p>Production-grade cryptographic document integrity, authenticated AES-256-GCM protection, and real-time tamper audit defense.</p>
+            <div class="cyber-pill-bar">
+                <span class="cyber-pill">🔒 AES-256-GCM</span>
+                <span class="cyber-pill">⚡ SHA-256 Hashing</span>
+                <span class="cyber-pill">🔑 Scrypt Memory-Hard KDF</span>
+                <span class="cyber-pill">🛡️ Constant-Time HMAC</span>
+                <span class="cyber-pill">🌐 100% Offline Local Security</span>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -336,31 +441,31 @@ if st.session_state["nav_section"] == "Dashboard":
 
     metrics = get_telemetry_metrics()
 
-    # 4-Column Stat Cards
+    # 4-Column KPI Cards
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.markdown(f'<div class="stat-card"><div class="stat-val">{metrics["total_documents"]}</div><div class="stat-label">Total Documents Processed</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sdvs-kpi-card cyan"><div class="sdvs-kpi-val">{metrics["total_documents"]}</div><div class="sdvs-kpi-label">Documents Processed</div></div>', unsafe_allow_html=True)
     with c2:
-        st.markdown(f'<div class="stat-card"><div class="stat-val">{metrics["encrypted_count"]}</div><div class="stat-label">Documents Encrypted</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sdvs-kpi-card emerald"><div class="sdvs-kpi-val">{metrics["encrypted_count"]}</div><div class="sdvs-kpi-label">Files Encrypted</div></div>', unsafe_allow_html=True)
     with c3:
-        st.markdown(f'<div class="stat-card"><div class="stat-val">{metrics["verified_count"]}</div><div class="stat-label">Total Verifications</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sdvs-kpi-card purple"><div class="sdvs-kpi-val">{metrics["verified_count"]}</div><div class="sdvs-kpi-label">Verifications Run</div></div>', unsafe_allow_html=True)
     with c4:
-        st.markdown(f'<div class="stat-card"><div class="stat-val" style="color:#DC2626;">{metrics["tamper_detected"]}</div><div class="stat-label">Tampering Detections</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sdvs-kpi-card rose"><div class="sdvs-kpi-val">{metrics["tamper_detected"]}</div><div class="sdvs-kpi-label">Tampering Detections</div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Primary Workflow Card
-    st.subheader("🔄 Cryptographic Lifecycle Workflow")
+    # Cryptographic Workflow Stepper
+    st.subheader("🔄 Cryptographic Lifecycle Architecture")
     st.markdown(
         """
         ```
-        UPLOAD DOCUMENT  ➔  ANALYZE FILE  ➔  GENERATE SHA-256 / SHA-1  ➔  OPTIONALLY ENCRYPT  ➔  STORE / DOWNLOAD  ➔  VERIFY LATER  ➔  DETECT TAMPERING
+        [1] UPLOAD DOCUMENT  ➔  [2] ANALYZE & FINGERPRINT  ➔  [3] AES-256-GCM ENCRYPT  ➔  [4] MANIFEST STORE  ➔  [5] INTEGRITY VERIFY  ➔  [6] DETECT TAMPERING
         ```
         """
     )
 
-    # Quick Actions
-    st.subheader("⚡ Quick Operations")
+    # Quick Launchers
+    st.subheader("⚡ Quick Launch Operations")
     q1, q2, q3, q4 = st.columns(4)
     with q1:
         if st.button("📤 Upload & Analyze", use_container_width=True):
@@ -375,15 +480,15 @@ if st.session_state["nav_section"] == "Dashboard":
             st.session_state["nav_section"] = "AES Encryption"
             st.rerun()
     with q4:
-        if st.button("🔍 Verify Document", use_container_width=True):
+        if st.button("🔍 Verify Integrity", use_container_width=True):
             st.session_state["nav_section"] = "Document Verification"
             st.rerun()
 
     st.markdown("---")
 
-    # Recent Activity Ledger Preview
-    col_rec, col_stat = st.columns([3, 2])
-    with col_rec:
+    # Recent Audit Log Preview
+    col_log, col_info = st.columns([3, 2])
+    with col_log:
         st.subheader("📋 Recent Security Events")
         logs = read_activity_logs(limit=6)
         if not logs:
@@ -393,22 +498,21 @@ if st.session_state["nav_section"] == "Dashboard":
                 logs,
                 column_config={
                     "timestamp": "Timestamp",
-                    "operation": "Operation",
-                    "filename": "Target Document",
-                    "result": "Status / Verdict",
+                    "operation": "Event Type",
+                    "filename": "Target File",
+                    "result": "Verdict / Status",
                 },
                 use_container_width=True,
                 hide_index=True,
             )
-    with col_stat:
-        st.subheader("🔒 Security Engine Status")
+    with col_info:
+        st.subheader("🛡️ Security Baseline Guarantees")
         st.markdown(
             """
-            * **AES-256-GCM:** 256-bit key, 128-bit Poly1305 tag, 96-bit random nonce per operation.
-            * **Scrypt KDF:** N=32,768, r=8, p=1, 16-byte random salt.
-            * **SHA-256 Digest:** 256 bits collision resistance ($2^{128}$ strength).
-            * **Side-Channel Defense:** Constant-time `hmac.compare_digest`.
-            * **Offline Guarantee:** 100% local processing; zero cloud transmission.
+            * **Authenticated Cipher (AEAD):** AES-256-GCM binds ciphertext and the 33-byte AAD header to a 16-byte Poly1305 authentication tag.
+            * **GPU/ASIC Hardening:** Scrypt KDF allocates ~32 MB RAM per derivation, neutralizing rainbow tables and brute-force attacks.
+            * **Side-Channel Immunity:** All verification compares hashes in constant time via `hmac.compare_digest`.
+            * **Zero Data Leakage:** Decryption isolates memory in temporary `.part` buffers and wipes unauthenticated streams immediately.
             """
         )
 
@@ -419,15 +523,15 @@ if st.session_state["nav_section"] == "Dashboard":
 elif st.session_state["nav_section"] == "Document Upload & Analysis":
     st.markdown(
         """
-        <div class="app-header">
-            <h1>📤 Secure Document Upload & Analysis</h1>
-            <p>Upload documents to inspect metadata, validate file boundaries, and generate immediate cryptographic fingerprints.</p>
+        <div class="sdvs-hero">
+            <h1>📤 Document Upload & Analysis</h1>
+            <p>Upload documents to inspect metadata, validate file integrity boundaries, and compute instant cryptographic digests.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown(f"**Accepted File Types (Max Limit: {st.session_state['max_file_size_mb']} MB):**")
+    st.markdown(f"**Accepted File Types (Configured Limit: {st.session_state['max_file_size_mb']} MB):**")
     render_format_badges()
 
     uploaded = st.file_uploader(
@@ -461,17 +565,17 @@ elif st.session_state["nav_section"] == "Document Upload & Analysis":
                 }
                 log_activity("DOCUMENT_UPLOADED", uploaded.name, f"Analyzed {format_size(file_size)}")
 
-            st.success(f"✅ Document **{uploaded.name}** uploaded and analyzed successfully.")
+            st.success(f"✅ Document **{uploaded.name}** processed successfully.")
 
-            # Document Details Card
-            st.markdown("### 📋 Document Analysis Summary")
+            # Metadata Display
+            st.markdown("### 📋 Document Metadata & Cryptographic Fingerprints")
             d1, d2, d3 = st.columns(3)
             with d1:
                 st.metric("File Name", uploaded.name)
             with d2:
                 st.metric("File Size", f"{format_size(file_size)} ({file_size:,} bytes)")
             with d3:
-                st.metric("File Format", uploaded.name.split(".")[-1].upper())
+                st.metric("Format", uploaded.name.split(".")[-1].upper())
 
             st.markdown("#### 🔒 **SHA-256 (NIST Secure Standard)**")
             st.code(sha256_val, language="text")
@@ -480,10 +584,10 @@ elif st.session_state["nav_section"] == "Document Upload & Analysis":
             st.caption("Notice: SHA-1 is provided for educational comparison and is not recommended for modern security-sensitive integrity protection.")
             st.code(sha1_val, language="text")
 
-            # Actions
+            # Actions Row
             col_a1, col_a2, col_a3 = st.columns(3)
             with col_a1:
-                if st.button("💾 Save to Verification Manifest", use_container_width=True):
+                if st.button("💾 Save SHA-256 to Manifest", use_container_width=True):
                     register_manifest_entry(
                         filename=uploaded.name,
                         algorithm="sha256",
@@ -493,11 +597,11 @@ elif st.session_state["nav_section"] == "Document Upload & Analysis":
                     log_activity("HASH_GENERATED", uploaded.name, "Registered in manifest (SHA-256)")
                     st.success(f"Registered **{uploaded.name}** in local manifest.")
             with col_a2:
-                if st.button("🔒 Proceed to Encrypt Document ➔", use_container_width=True):
+                if st.button("🔒 Encrypt Document (AES-256-GCM) ➔", use_container_width=True):
                     st.session_state["nav_section"] = "AES Encryption"
                     st.rerun()
             with col_a3:
-                if st.button("🔍 Proceed to Integrity Verification ➔", use_container_width=True):
+                if st.button("🔍 Verify Document Integrity ➔", use_container_width=True):
                     st.session_state["nav_section"] = "Document Verification"
                     st.rerun()
 
@@ -508,9 +612,9 @@ elif st.session_state["nav_section"] == "Document Upload & Analysis":
 elif st.session_state["nav_section"] == "Hash Generator":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>⚡ Cryptographic Hash Generator</h1>
-            <p>Calculate exact cryptographic fingerprints in 64 KB streaming buffers for collision-resistant integrity verification.</p>
+            <p>Compute 64 KB streaming cryptographic digests for collision-resistant document integrity and fingerprint certificates.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -518,9 +622,9 @@ elif st.session_state["nav_section"] == "Hash Generator":
 
     st.markdown(
         """
-        <div class="info-callout">
-            <strong>Standards Guidance:</strong> SHA-256 is the industry-standard cryptographic hash algorithm (256-bit digest). 
-            SHA-1 is provided strictly for educational/legacy comparison and is not recommended for modern security-sensitive integrity protection.
+        <div class="callout-box">
+            <strong>Standards Guidance:</strong> SHA-256 is the NIST-recommended cryptographic integrity standard (256-bit digest). 
+            SHA-1 is computed simultaneously strictly for academic/legacy comparison.
         </div>
         """,
         unsafe_allow_html=True,
@@ -532,7 +636,7 @@ elif st.session_state["nav_section"] == "Hash Generator":
         key="hash_gen_uploader",
     )
 
-    if st.button("⚡ Generate Cryptographic Hashes (SHA-256 & SHA-1)", type="primary", use_container_width=True):
+    if st.button("⚡ Generate Cryptographic Fingerprints (SHA-256 & SHA-1)", type="primary", use_container_width=True):
         if not hash_upload:
             st.error("Please select a file to hash.")
         else:
@@ -608,7 +712,6 @@ elif st.session_state["nav_section"] == "Hash Generator":
                 use_container_width=True,
             )
         with col_h4:
-            # Download Full Verification Report
             report_text = generate_text_report(
                 filename=data["filename"],
                 file_size_bytes=data["size_bytes"],
@@ -619,7 +722,7 @@ elif st.session_state["nav_section"] == "Hash Generator":
                 verification_method="Streaming Cryptographic Hash Engine",
             )
             st.download_button(
-                label="📄 Download Full Security Certificate (.txt)",
+                label="📄 Download Security Audit Certificate (.txt)",
                 data=report_text,
                 file_name=f"{data['filename']}_security_report.txt",
                 mime="text/plain",
@@ -633,7 +736,7 @@ elif st.session_state["nav_section"] == "Hash Generator":
 elif st.session_state["nav_section"] == "AES Encryption":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>🔒 AES-256-GCM Document Encryption</h1>
             <p>Authenticated encryption with Scrypt key derivation, random 16-byte salt, random 12-byte nonce, and 16-byte GCM authentication tag.</p>
         </div>
@@ -643,9 +746,9 @@ elif st.session_state["nav_section"] == "AES Encryption":
 
     st.markdown(
         """
-        <div class="info-callout">
-            <strong>AEAD Architecture:</strong> Uses AES-256 in Galois/Counter Mode (GCM). The 33-byte protocol header is cryptographically bound 
-            as Additional Authenticated Data (AAD). Modifying even one bit of the ciphertext or header causes decryption to abort.
+        <div class="callout-box">
+            <strong>AEAD Security:</strong> Encrypts payload with AES-256 in Galois/Counter Mode. The 33-byte protocol header is cryptographically authenticated 
+            as Additional Authenticated Data (AAD). Tampering with either the ciphertext or metadata causes decryption to abort.
         </div>
         """,
         unsafe_allow_html=True,
@@ -667,7 +770,7 @@ elif st.session_state["nav_section"] == "AES Encryption":
     with col_p2:
         enc_confirm = st.text_input("Confirm Encryption Password:", type="password", key="aes_enc_confirm")
 
-    st.warning("⚠️ **Zero-Knowledge Security:** Passwords are never stored. If lost, the encrypted file cannot be decrypted by anyone.")
+    st.warning("⚠️ **Zero-Knowledge Architecture:** Passwords are never stored. If lost, the encrypted file cannot be recovered.")
 
     if st.button("🔒 Encrypt Document (AES-256-GCM)", type="primary", use_container_width=True):
         if not enc_file:
@@ -695,7 +798,7 @@ elif st.session_state["nav_section"] == "AES Encryption":
                         st.success(f"✅ **Encryption Complete!** Generated `{out_name}` ({len(enc_bytes):,} bytes).")
 
                         st.download_button(
-                            label=f"⬇️ Download Encrypted File ({out_name})",
+                            label=f"⬇️ Download Encrypted Package ({out_name})",
                             data=enc_bytes,
                             file_name=out_name,
                             mime="application/octet-stream",
@@ -712,7 +815,7 @@ elif st.session_state["nav_section"] == "AES Encryption":
 elif st.session_state["nav_section"] == "Decryption":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>🔓 Authenticated Document Decryption</h1>
             <p>Authenticate and decrypt <code>.sdvs</code> packages. Verifies 33-byte AAD header and 16-byte GCM authentication tag.</p>
         </div>
@@ -769,7 +872,7 @@ elif st.session_state["nav_section"] == "Decryption":
 elif st.session_state["nav_section"] == "Document Verification":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>🔍 Document Integrity Verification</h1>
             <p>Verify document authenticity and detect micro-tampering using constant-time cryptographic hash comparisons.</p>
         </div>
@@ -811,9 +914,9 @@ elif st.session_state["nav_section"] == "Document Verification":
                         log_activity("VERIFICATION_SUCCESS", test_doc.name, f"VERIFIED against {ref_doc.name}")
                         st.markdown(
                             """
-                            <div class="status-box-verified">
-                                <h3 style="margin:0;">✅ DOCUMENT VERIFIED</h3>
-                                <p style="margin:0.5rem 0 0 0;">SHA-256 fingerprints match identically. No modification detected.</p>
+                            <div class="verdict-banner-verified">
+                                <h3 style="margin:0;">✅ DOCUMENT VERIFIED — NO MODIFICATION DETECTED</h3>
+                                <p style="margin:0.5rem 0 0 0;">SHA-256 fingerprints match identically. The document is authentic and unmodified.</p>
                             </div>
                             """,
                             unsafe_allow_html=True,
@@ -822,8 +925,8 @@ elif st.session_state["nav_section"] == "Document Verification":
                         log_activity("TAMPERING_DETECTED", test_doc.name, f"TAMPERED (mismatch with {ref_doc.name})")
                         st.markdown(
                             """
-                            <div class="status-box-tampered">
-                                <h3 style="margin:0;">❌ TAMPERING DETECTED</h3>
+                            <div class="verdict-banner-tampered">
+                                <h3 style="margin:0;">❌ TAMPERING DETECTED — MODIFICATION DETECTED</h3>
                                 <p style="margin:0.5rem 0 0 0;">The document content differs from the reference document. Cryptographic hash mismatch.</p>
                             </div>
                             """,
@@ -839,7 +942,6 @@ elif st.session_state["nav_section"] == "Document Verification":
                         st.markdown(f"**Inspected Document ({test_doc.name}) [{format_size(len(test_bytes))}]:**")
                         st.code(h_test, language="text")
 
-                    # Download Verification Report
                     rep = generate_text_report(
                         filename=test_doc.name,
                         file_size_bytes=len(test_bytes),
@@ -896,9 +998,9 @@ elif st.session_state["nav_section"] == "Document Verification":
                         log_activity("VERIFICATION_SUCCESS", single_doc.name, "VERIFIED against known hash")
                         st.markdown(
                             """
-                            <div class="status-box-verified">
-                                <h3 style="margin:0;">✅ DOCUMENT VERIFIED</h3>
-                                <p style="margin:0.5rem 0 0 0;">SHA-256 fingerprints match identically. No modification detected.</p>
+                            <div class="verdict-banner-verified">
+                                <h3 style="margin:0;">✅ DOCUMENT VERIFIED — NO MODIFICATION DETECTED</h3>
+                                <p style="margin:0.5rem 0 0 0;">SHA-256 fingerprints match identically. Document integrity confirmed.</p>
                             </div>
                             """,
                             unsafe_allow_html=True,
@@ -907,8 +1009,8 @@ elif st.session_state["nav_section"] == "Document Verification":
                         log_activity("TAMPERING_DETECTED", single_doc.name, "TAMPERED (mismatch with expected hash)")
                         st.markdown(
                             """
-                            <div class="status-box-tampered">
-                                <h3 style="margin:0;">❌ TAMPERING DETECTED</h3>
+                            <div class="verdict-banner-tampered">
+                                <h3 style="margin:0;">❌ TAMPERING DETECTED — MODIFICATION DETECTED</h3>
                                 <p style="margin:0.5rem 0 0 0;">The document hash does not match the expected reference digest.</p>
                             </div>
                             """,
@@ -930,9 +1032,9 @@ elif st.session_state["nav_section"] == "Document Verification":
 elif st.session_state["nav_section"] == "Tamper Simulation":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>🧪 Micro-Tamper Simulation Lab</h1>
-            <p>Demonstrate the cryptographic Avalanche Effect: Inverting just 1 single bit in an isolated copy produces a completely disparate hash.</p>
+            <p>Demonstrate the cryptographic Avalanche Effect: Inverting just 1 single bit in an isolated copy produces an entirely disparate digest.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -940,8 +1042,8 @@ elif st.session_state["nav_section"] == "Tamper Simulation":
 
     st.markdown(
         """
-        <div class="info-callout">
-            <strong>Isolation Safety:</strong> The simulation creates an isolated copy in a temporary memory directory. 
+        <div class="callout-box">
+            <strong>Isolation Guarantee:</strong> The simulation creates an isolated copy in a temporary memory directory. 
             <strong>Your original document is strictly never modified.</strong>
         </div>
         """,
@@ -964,9 +1066,9 @@ elif st.session_state["nav_section"] == "Tamper Simulation":
 
                 st.markdown(
                     """
-                    <div class="status-box-tampered">
-                        <h3 style="margin:0;">❌ TAMPERING DETECTED</h3>
-                        <p style="margin:0.5rem 0 0 0;">Even a microscopic 1-bit change to the document produced a completely different cryptographic hash (Avalanche Effect).</p>
+                    <div class="verdict-banner-tampered">
+                        <h3 style="margin:0;">❌ TAMPERING DETECTED — AVALANCHE EFFECT TRIGGERED</h3>
+                        <p style="margin:0.5rem 0 0 0;">Even a microscopic 1-bit change to the document produced a completely disparate cryptographic hash.</p>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -981,7 +1083,7 @@ elif st.session_state["nav_section"] == "Tamper Simulation":
                     st.markdown("**TAMPERED COPY SHA-256 (1 Bit Inverted):**")
                     st.code(res["tampered_hash"], language="text")
 
-                st.info("ℹ️ **Explanation:** SHA-256 guarantees high diffusion. Flipping a single bit (`byte[0] ^ 0x01`) causes ~50% of the 256 output bits to flip unpredictably.")
+                st.info("ℹ️ **Theoretical Defense:** SHA-256 provides strict diffusion. Flipping 1 bit (`byte[0] ^ 0x01`) causes ~50% of the 256 output bits to flip pseudorandomly.")
 
 
 # =============================================================================
@@ -990,7 +1092,7 @@ elif st.session_state["nav_section"] == "Tamper Simulation":
 elif st.session_state["nav_section"] == "Verification History":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>📜 Verification History & Manifest Repository</h1>
             <p>Manage persistent document fingerprints and inspection records in the local manifest repository.</p>
         </div>
@@ -1058,7 +1160,7 @@ elif st.session_state["nav_section"] == "Verification History":
 elif st.session_state["nav_section"] == "Security Audit Log":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>🛡️ Security & Audit Logging</h1>
             <p>Immutable local audit trail of all cryptographic actions. Strict security rule: Passwords and keys are never logged.</p>
         </div>
@@ -1130,7 +1232,7 @@ elif st.session_state["nav_section"] == "Security Audit Log":
 elif st.session_state["nav_section"] == "Security Demonstration Lab":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>🎯 Live Security Demonstration Lab</h1>
             <p>Curated presentation workflows designed for live academic examination and viva voce demonstrations.</p>
         </div>
@@ -1164,8 +1266,8 @@ elif st.session_state["nav_section"] == "Security Demonstration Lab":
             valid, status, _ = compare_hashes(h1, h2)
             st.markdown(
                 """
-                <div class="status-box-tampered">
-                    <h4 style="margin:0;">❌ TAMPERING DETECTED</h4>
+                <div class="verdict-banner-tampered">
+                    <h4 style="margin:0;">❌ TAMPERING DETECTED — AVALANCHE EFFECT</h4>
                     <p style="margin:0.3rem 0 0 0;">Hashes differ completely. Bit-level modification detected.</p>
                 </div>
                 """,
@@ -1228,7 +1330,7 @@ elif st.session_state["nav_section"] == "Security Demonstration Lab":
 elif st.session_state["nav_section"] == "About Security":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>📚 Educational Security Center</h1>
             <p>Theoretical and mathematical foundations of cryptographic hashing, authenticated encryption, and tamper defense.</p>
         </div>
@@ -1271,7 +1373,7 @@ elif st.session_state["nav_section"] == "About Security":
 elif st.session_state["nav_section"] == "Settings & Diagnostics":
     st.markdown(
         """
-        <div class="app-header">
+        <div class="sdvs-hero">
             <h1>⚙️ System Settings & Diagnostics</h1>
             <p>Configure file boundaries, inspect cryptographic parameters, and review runtime environment diagnostics.</p>
         </div>
